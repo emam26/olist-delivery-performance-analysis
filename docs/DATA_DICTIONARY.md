@@ -96,9 +96,9 @@ Every `stg.*` table includes:
 |---|---|
 | `staging_row_id` | SQL identity for physical row lineage |
 | `load_batch_id` | Foreign key to `audit.load_batches` |
-| `source_row_number` | One-based CSV data-row number |
-| `source_sha256` | Hash of the complete source file loaded in that batch |
-| source fields | Original CSV text, with empty fields represented as SQL null |
+| `source_row_number` | Physical CSV line number, with the header on line 1 |
+| `source_row_sha256` | Deterministic hash of the source row's ordered text values |
+| source fields | Original CSV text, including empty strings; typed views apply `NULLIF` |
 
 Staging does not enforce business-key uniqueness because duplicate source rows must
 remain observable.
@@ -113,10 +113,17 @@ source hash, source byte count, expected and inserted row counts, status (`Start
 start/completion UTC timestamps, inserted row count, and safe error text. A filtered
 unique index prevents two successful rows for the same dataset/hash pair.
 
+### `audit.dataset_snapshots` and `audit.dataset_snapshot_batches`
+
+One snapshot row identifies an ordered six-file manifest by SHA-256 and records
+whether activation started, succeeded, or failed. The mapping table links exactly
+one successful load batch to each dataset in a snapshot. Analytical views read only
+the newest successful complete snapshot; a partially loaded refresh is not exposed.
+
 ### `audit.validation_runs`
 
-One row per SQL validation execution, including start/completion UTC timestamps,
-status, and safe execution message.
+One row per SQL validation execution, including the validated dataset snapshot ID,
+start/completion UTC timestamps, status, and safe execution message.
 
 ### `audit.validation_results`
 
@@ -136,6 +143,7 @@ Grain: one canonical order.
 | `customer_id` / `customer_unique_id` | Correctly joined customer identifiers |
 | `customer_state` | Customer geography |
 | `order_status` | Source order status |
+| `is_delivered` | 1 when normalized order status is `delivered` |
 | `order_purchase_timestamp` | Typed purchase timestamp |
 | `purchase_month` | Derived purchase month |
 | `order_delivered_customer_timestamp` | Typed actual-delivery timestamp |
@@ -145,8 +153,12 @@ Grain: one canonical order.
 | `is_duration_eligible` | 1 only for a valid nonnegative purchase-to-delivery interval |
 | `delivery_duration_hours` | Fractional elapsed hours |
 | `days_late` | Positive calendar-day difference for late eligible orders |
-| `exclusion_reason` | Actionable reason for an unavailable core metric |
-| `selected_review_score` | One deterministic valid score, otherwise null |
+| `delivery_exclusion_reason` | Reason delivery status classification is unavailable |
+| `duration_exclusion_reason` | Reason purchase-to-delivery duration is unavailable |
+| `exclusion_reason` | Delivery reason first, otherwise duration reason; compatibility field |
+
+`selected_review_score` is added by `reporting.vw_order_delivery_detail`, not by
+the analytical view itself. It is one deterministic valid score, otherwise null.
 
 ### Bridge views
 
@@ -167,7 +179,8 @@ The `reporting` schema exposes:
 - attributed seller performance;
 - attributed category performance;
 - selected-review-score performance;
-- latest validation results.
+- current source provenance;
+- latest validation results for the active snapshot.
 
 Each aggregated view includes the relevant all-order, eligible, excluded, on-time,
 and late counts so a consumer can verify its denominator.

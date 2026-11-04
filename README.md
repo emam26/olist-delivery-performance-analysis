@@ -1,8 +1,8 @@
-# 📦 Olist Delivery Performance Analysis
+# Olist Delivery Performance Analysis
 
 > Understanding delivery times, late orders, and customer reviews with SQL, Python, and Power BI.
 
-![Status: Design stage](https://img.shields.io/badge/status-design%20stage-yellow)
+![Status: Implementation awaiting verification](https://img.shields.io/badge/status-awaiting%20verification-yellow)
 ![Python](https://img.shields.io/badge/language-Python-3776AB?logo=python&logoColor=white)
 ![SQL Server](https://img.shields.io/badge/database-SQL%20Server-CC2927)
 ![Power BI](https://img.shields.io/badge/dashboard-Power%20BI-F2C811)
@@ -24,9 +24,13 @@ It is a historical portfolio analysis, not work commissioned by Olist. The findi
 
 The source is the [Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce), published by Olist on Kaggle. The publisher describes approximately 100,000 orders from 2016 to 2018.
 
-Download the files from that source and retain its attribution and license information. Raw dataset files will not be bundled into the repository. The implementation will document its input filenames, file hashes, and loaded row counts so the analysis can be reproduced.
+Download the files from that source and retain its attribution and license
+information. Raw dataset files are not bundled into the repository. Inventory,
+load, snapshot, validation, and export artifacts record input filenames, hashes,
+and row counts for reproducibility.
 
-The planned inputs are orders, order items, customers, sellers, products, and reviews. Payment data is optional and is not required to answer the delivery questions.
+The required inputs are orders, order items, customers, sellers, products, and
+reviews. Payment data is outside the current analytical scope.
 
 ## Questions to answer
 
@@ -45,13 +49,14 @@ The analysis will report group sizes beside rates. Small groups will not be rank
 2. Load them into SQL Server staging tables without silently discarding rows.
 3. Use Python and SQL to examine keys, missing values, timestamps, and unmatched references.
 4. Create documented analytical tables and views at explicit grains.
-5. Calculate delivery metrics in SQL and reconcile their totals.
-6. Build Power BI pages from the analytical views.
-7. Publish the findings, exclusions, and limitations alongside the queries.
+5. Activate all six successful source batches as one immutable analytical snapshot.
+6. Calculate delivery metrics independently in SQL and Python and reconcile them.
+7. Export validated reporting data or import reporting views into Power BI.
+8. Publish findings only with exclusions, provenance, and limitations.
 
-The core tools will be Microsoft SQL Server, T-SQL, Python, pandas, Power BI, and Git. Additional infrastructure will be added only if it serves a clear need.
+The core tools are Microsoft SQL Server, T-SQL, Python, pandas, Power BI, and Git.
 
-## Proposed analytical model
+## Implemented analytical model
 
 | Table or view | Grain and purpose |
 | --- | --- |
@@ -69,7 +74,7 @@ Order items and reviews can multiply rows when joined directly to orders. The or
 
 ## Metric definitions
 
-| Metric | Planned definition |
+| Metric | Implemented definition |
 | --- | --- |
 | Eligible delivered order | An order marked delivered with valid actual and estimated delivery dates. |
 | Late order | Actual delivery calendar date is after the estimated delivery calendar date. |
@@ -84,10 +89,11 @@ Canceled, unavailable, undelivered, and incomplete orders will be reported separ
 
 If multiple reviews exist for one order, the analysis will first inspect them and document a deterministic selection rule. It will not assume the relationship is one-to-one.
 
-## Planned Power BI pages
+## Power BI pages
 
 - **Delivery overview:** eligible orders, on-time rate, delivery-time distribution, and monthly patterns.
-- **Seller and regional comparisons:** group sizes, late-delivery rates, and delivery times.
+- **Regions and sellers:** group sizes, late-delivery rates, delivery times, and
+  non-additive category context.
 - **Customer reviews:** review distributions alongside delivery outcomes.
 - **Data quality:** missing fields, exclusions, unmatched records, and reconciliation totals.
 
@@ -102,6 +108,30 @@ Before publishing findings, the project should demonstrate that:
 - SQL results agree with independently checked sample calculations.
 - Power BI totals agree with the underlying reporting views.
 - A fresh run can reproduce the published outputs from the documented input files.
+
+The last user-supplied baseline before the current hardening edits was Python
+3.13.13, Ruff lint and format checks passing, and 48 offline tests passing with one
+SQL Server test deselected. Because source, SQL, tests, and documentation have since
+changed, those results are historical evidence only; the current revision requires
+the manual verification commands below.
+
+## Reproduce from a fresh checkout
+
+```bash
+cd /mnt/f/olist-delivery-performance-analysis
+python3.13 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[dev]'
+ruff check .
+ruff format --check .
+python -m pytest -q -m "not sqlserver"
+```
+
+Then acquire the six source files manually, create a non-overwriting inventory,
+configure the ignored `.env`, and follow the SQL Server and Power BI phases in the
+[manual runbook](docs/MANUAL_RUNBOOK.md). Database deployment, real-data loading,
+metric reconciliation, export, and dashboard construction remain manual and
+environment-dependent.
 
 ## Interpretation limits
 
@@ -123,3 +153,7 @@ documented in [architecture](docs/ARCHITECTURE.md), [methodology](docs/METHODOLO
 [implementation status](docs/IMPLEMENTATION_STATUS.md). Source CSV files,
 credentials, generated reports, and database artifacts are intentionally excluded
 from version control.
+
+After all reconciliations are verified, use the
+[screenshot checklist](docs/SCREENSHOT_CHECKLIST.md) before adding real dashboard
+images to the portfolio.

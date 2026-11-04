@@ -6,6 +6,7 @@ otherwise, filters apply before the numerator and denominator are calculated.
 | KPI | Definition | Denominator / cohort | Null and exclusion behavior |
 |---|---|---|---|
 | All orders | Distinct canonical `order_id` count | Canonical orders | Duplicate raw keys are quality findings, not extra orders |
+| Delivered orders | Orders whose trimmed, case-normalized status is `delivered` | All orders | Does not imply delivery timestamps are usable |
 | Delivery-eligible orders | Delivered orders with valid actual and estimated delivery timestamps | All orders | Missing, invalid, or non-delivered status is excluded |
 | On-time orders | Eligible orders where actual calendar date <= estimated calendar date | Delivery-eligible orders | Never inferred from order status alone |
 | Late orders | Eligible orders where actual calendar date > estimated calendar date | Delivery-eligible orders | Same-date delivery is on time |
@@ -14,6 +15,7 @@ otherwise, filters apply before the numerator and denominator are calculated.
 | Delivery-status excluded orders | All orders - delivery-eligible orders | All orders | Reported as a count and reason distribution |
 | Days early or late | Actual delivery date - estimated delivery date in whole calendar days | Delivery-eligible orders | Negative = early; positive = late |
 | Duration-eligible orders | Orders with valid purchase and delivery timestamps and nonnegative interval | All orders | Evaluated independently of delivery-status eligibility |
+| Duration-excluded orders | All orders - duration-eligible orders | All orders | Reported separately from delivery-status exclusions |
 | Delivery duration days | `(delivered timestamp - purchase timestamp) / 86,400 seconds` | Duration-eligible orders | Fractional days retained; invalid/negative is null |
 | Average delivery days | Arithmetic mean of delivery duration | Duration-eligible orders | Null when cohort is empty |
 | Median delivery days | Continuous 50th percentile | Duration-eligible orders | SQL definition uses `PERCENTILE_CONT(0.50)` |

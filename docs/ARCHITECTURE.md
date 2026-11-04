@@ -16,7 +16,10 @@ Manually acquired source CSV files
 Offline inventory (headers, rows, hashes, structural checks)
             |
             v
-SQL Server raw staging tables + audit.load_batches
+SQL Server raw staging tables + per-file audit.load_batches
+            |
+            v
+Six-file audit.dataset_snapshots activation
             |
             v
 Typed/canonical analytical views
@@ -39,13 +42,14 @@ selection without rewriting the files.
   escaped ODBC Driver 18 connection string.
 - `datasets.py` defines the exact six-file source contract.
 - `inventory.py` performs offline file-level and cross-file inspection.
-- `load_data.py` loads one file atomically, records provenance, and skips an already
-  successful dataset/hash pair.
+- `load_data.py` verifies inventory hashes, loads one file atomically, reuses an
+  already successful dataset/hash pair, and activates complete source snapshots.
 - `metrics.py` independently defines delivery classification and duration metrics.
 - `validation.py` combines logged SQL quality checks with cross-engine metric
   reconciliation.
-- `export.py` produces dashboard CSVs plus a hash manifest without overwriting a
-  prior export.
+- `export.py` holds the active snapshot stable, requires a completed non-failed SQL
+  validation for it, and produces dashboard CSVs plus a provenance manifest without
+  overwriting a prior export.
 - `statistics.py` contains explicitly descriptive summary helpers.
 
 ### SQL Server
@@ -70,15 +74,24 @@ many-to-many and not additive to the overall order total.
 
 Each source file is one SQL transaction:
 
-1. compute and record source identity;
+1. verify the inventory hash and record source identity;
 2. insert raw rows with batch and row lineage;
-3. mark the load batch successful;
-4. commit once.
+3. recheck the file hash to detect a change during reading;
+4. mark the load batch successful;
+5. commit once.
 
 An exception rolls back all staging and in-transaction audit changes for that
 attempt. A separate, post-rollback transaction records safe failure provenance.
 Retrying the same file is safe: only a successful `(dataset_name, source_sha256)`
 pair causes an idempotent skip. A failed attempt does not masquerade as loaded data.
+
+The six files are published as a second-level transaction boundary. The loader
+computes a deterministic manifest hash from the six dataset names, filenames, row
+counts, and source hashes. It can reuse successful per-file batches, but analytical
+views switch only after all six batch mappings are committed to one successful
+`audit.dataset_snapshots` row. If loading or activation fails, the previous complete
+snapshot remains current. Validation runs are tied to a snapshot ID, and dashboard
+export holds that snapshot stable for the duration of the read.
 
 ## Deterministic analytical semantics
 

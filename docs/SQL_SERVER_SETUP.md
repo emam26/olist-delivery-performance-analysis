@@ -80,8 +80,8 @@ ORDER BY s.name, o.type_desc;
 
 Expected pattern: objects appear only in the four project schemas. Return this
 non-secret output for review. Do not proceed to loading if required schemas, six
-staging tables, analytical views, reporting views, or the validation procedure are
-missing.
+staging tables, snapshot audit tables, analytical views, reporting views, or the
+validation procedure are missing.
 
 ## 5. Connectivity boundary
 
@@ -94,6 +94,9 @@ loading, validation, or metrics are correct.
 
 - A failed file load should leave no staging rows from that transaction.
 - Safe failed-attempt provenance may remain in `audit.load_batches`.
+- A six-file refresh becomes visible only when `audit.dataset_snapshots` is marked
+  `Succeeded` and has six valid mappings. Individual successful batches from an
+  interrupted refresh are reusable, but must not replace the prior active snapshot.
 - Never delete or truncate data merely to retry; diagnose the batch status and
   source hash first.
 - Make a database backup before any operator-authored destructive recovery.

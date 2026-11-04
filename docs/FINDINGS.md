@@ -12,7 +12,8 @@ Power BI reconciliation have all passed using recorded evidence.
 
 - Analysis date (UTC): `NOT RUN`
 - Source file hashes: `NOT RECORDED`
-- Successful load-batch IDs: `NOT RECORDED`
+- Active dataset snapshot/manifest hash: `NOT RECORDED`
+- Mapped successful load-batch IDs: `NOT RECORDED`
 - SQL validation run ID: `NOT RECORDED`
 - Independent metric validation artifact: `NOT CREATED`
 - Dashboard export manifest or Power BI refresh: `NOT CREATED`

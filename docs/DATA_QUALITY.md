@@ -18,27 +18,37 @@ The offline inventory evaluates each required CSV before any SQL connection:
 - byte count and SHA-256 hash;
 - parsed data-row count;
 - malformed row count;
-- blank and duplicate natural keys;
+- blank required identifiers and duplicate natural keys;
 - timestamp parseability for relevant columns;
 - negative purchase-to-delivery intervals;
 - cross-file orphans for orders, customers, sellers, and products;
-- review multiplicity by order.
+- review multiplicity, orders without items, and multi-seller/category attribution.
 
 Inventory output is written to a new path and is not silently overwritten. Source
 files are never modified.
+
+The report separates structural loadability from analytical quality status.
+Missing files, header mismatch, malformed CSV structure, and empty required files
+are not loadable. A structurally readable file with duplicate identifiers, invalid
+timestamps, negative intervals, or relationship defects may be staged so its raw
+rows remain auditable, but its failed quality findings still block validation,
+export, and publication.
 
 ## SQL checks
 
 `audit.usp_run_validation` logs and returns checks covering:
 
 - successful load availability and batch/source counts;
+- complete six-file snapshot identity and batch/hash mappings;
 - raw staging row counts;
 - duplicate natural keys;
 - order-item/customer/seller/product/review orphans;
 - invalid required timestamp text;
+- explicit delivery-status and duration exclusion populations;
 - negative delivery intervals;
 - orders without items;
-- multiple usable reviews per order;
+- multiple source reviews per order and deterministic usable-review selection;
+- missing/invalid review scores and multi-seller/category attribution counts;
 - uniqueness of canonical order and bridge grains;
 - delivery cohort reconciliation and null semantics;
 - consistency between analytical and reporting outputs.
@@ -60,9 +70,9 @@ not automatically a failure; hidden denominator changes are.
 ## Independent metric validation
 
 Python computes the core order metrics from independently parsed records. SQL
-computes the same metrics from analytical views. Exact counts and tolerance-bounded
-continuous statistics are compared. This catches semantic drift that a single-engine
-test would miss.
+computes the same metrics from analytical views. Exact counts and absolute-
+tolerance-bounded continuous statistics are compared with relative tolerance set to
+zero. This catches semantic drift that a single-engine test would miss.
 
 Power BI is a third reconciliation layer. It must match validated order counts and
 rates before publication.

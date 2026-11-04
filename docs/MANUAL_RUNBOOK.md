@@ -16,7 +16,7 @@ continue into SQL loading or dashboard work until the earlier gate is satisfied.
 If your checkout is elsewhere, replace the project directory only after confirming
 its absolute path. Never guess a SQL host, login, or password.
 
-## Phase A — offline project and source checks
+## Phase A - offline project and source checks
 
 ### A1. Confirm the checkout
 
@@ -107,7 +107,7 @@ JSON report path. The command must refuse to overwrite an existing report. Retur
 the overall status, per-file row counts and SHA-256 hashes, and relationship-check
 summary. Do not return raw records.
 
-## Phase B — local configuration and SQL Server deployment
+## Phase B - local configuration and SQL Server deployment
 
 ### B1. Create local configuration
 
@@ -166,7 +166,7 @@ and audit objects are visible to the runtime identity.
 Expected pattern: the SQL-marked test passes without exposing a connection string.
 Stop and return the failing assertion or safe database error if it does not.
 
-## Phase C — load and validate
+## Phase C - load and validate
 
 ### C1. Load the six inventoried files
 
@@ -177,11 +177,13 @@ python scripts/load_to_sqlserver.py \
   --inventory reports/inventory/olist_source_inventory.json
 ```
 
-Purpose: load each source file atomically with source hashes and batch provenance.
+Purpose: load each source file atomically, reuse already successful file hashes,
+and activate one six-file source snapshot only after every mapping is complete.
 
 Expected pattern: one successful or idempotently skipped result per dataset. Return
 dataset name, batch ID, source row count, inserted row count, and status. Stop on the
-first failure; preserve its safe message and do not truncate tables.
+first failure; preserve its safe message and do not truncate tables. A failed
+refresh must leave the prior successful snapshot active.
 
 ### C2. Inspect load provenance
 
@@ -189,25 +191,24 @@ Where: SSMS, target database `OlistDeliveryAnalytics`.
 
 ```sql
 SELECT
-    load_batch_id,
-    dataset_name,
-    source_filename,
-    source_sha256,
-    expected_row_count,
-    inserted_row_count,
-    status,
-    started_at_utc,
-    completed_at_utc,
-    error_summary
-FROM audit.load_batches
-ORDER BY load_batch_id;
+    p.dataset_snapshot_id,
+    p.source_manifest_sha256,
+    p.dataset_name,
+    p.load_batch_id,
+    p.source_filename,
+    p.source_sha256,
+    p.expected_row_count,
+    p.inserted_row_count,
+    p.completed_at_utc
+FROM reporting.vw_current_source_provenance AS p
+ORDER BY p.dataset_name;
 ```
 
 Purpose: verify batch identity and status without viewing source rows or secrets.
 
-Expected pattern: exactly one latest successful batch per required source hash and
-matching source/inserted row counts. Failed historical attempts may remain as valid
-provenance.
+Expected pattern: one snapshot ID and manifest hash across exactly six rows, with
+matching expected/inserted counts. `audit.load_batches` and
+`audit.dataset_snapshots` may retain failed historical attempts as provenance.
 
 ### C3. Run logged SQL data-quality checks
 
@@ -216,6 +217,7 @@ Where: WSL Bash, activated environment, project root.
 ```bash
 python scripts/validate_data.py \
   --inventory reports/inventory/olist_source_inventory.json \
+  --sqlserver \
   --json-output reports/sql_validation.json \
   --markdown-output reports/sql_validation.md
 ```
@@ -234,6 +236,7 @@ Where: WSL Bash, activated environment, project root.
 ```bash
 python scripts/validate_metrics.py \
   --orders-csv data/raw/olist_orders_dataset.csv \
+  --sqlserver \
   --json-output reports/metric_reconciliation.json
 ```
 
@@ -258,7 +261,7 @@ Expected pattern: all six datasets report an idempotent skip referencing existin
 successful batch IDs. Confirm in SSMS that successful-batch and staging-row counts
 did not increase.
 
-## Phase D — dashboard handoff
+## Phase D - dashboard handoff
 
 ### D1. Export a manifest-bound snapshot
 
@@ -272,8 +275,10 @@ python scripts/export_dashboard_data.py \
 Purpose: create one non-overwritten CSV set and `manifest.json` for offline Power BI
 use.
 
-Expected pattern: one CSV per configured reporting view plus a manifest containing
-row counts and SHA-256 hashes. Return filenames, row counts, and hashes only.
+Expected pattern: eight CSV files plus a manifest containing row counts, SHA-256
+hashes, the active snapshot/manifest identity, and validation run/status. Export
+must fail before creating a directory when the current snapshot has no completed
+Passed or Warning validation run.
 
 ### D2. Build and reconcile Power BI manually
 
@@ -287,7 +292,7 @@ denominators/exclusions, disconnected seller/category summaries, and no failed
 critical validation. Return the reconciliation table and screenshots only after
 checking that they contain no credentials or private local paths.
 
-## Phase E — findings and version control
+## Phase E - findings and version control
 
 Populate `docs/FINDINGS.md` only from reconciled outputs. Update
 `docs/IMPLEMENTATION_STATUS.md` with supplied execution evidence and limitations.

@@ -65,14 +65,18 @@ through reason counts.
 
 The SQL analytical and reporting views store the same duration as
 `delivery_duration_hours`; Python and Power BI convert that field to fractional
-days when presenting the documented day-based KPIs.
+days when presenting the documented day-based KPIs. SQL calculates elapsed seconds
+before dividing by 3,600 and rounding the row-level hour value to four decimals;
+the reconciliation tolerance covers only that documented decimal rounding.
 
 ## Canonical records and duplicates
 
 Raw staging retains every source row. Quality checks count duplicated natural keys.
-Analytical views select a deterministic canonical row from the latest successful
-load using source-row ordering. This makes reruns reproducible but does not make a
-duplicate source key benign; unexpected duplication remains a validation finding.
+Analytical views select a deterministic canonical row from the active successful
+six-file snapshot using source-row ordering. Per-file batches become visible only
+after the complete source manifest is activated. This makes reruns reproducible but
+does not make a duplicate source key benign; unexpected duplication remains a
+validation finding.
 
 For reviews, one usable record per order is selected by a documented ordering that
 prioritizes a valid score and then the latest answer/creation timestamp with stable
@@ -84,6 +88,9 @@ Seller and category analyses use distinct bridges:
 
 - one row per `(order_id, seller_id)`;
 - one row per `(order_id, product_category_name)`.
+
+Items whose product lookup is absent remain attributable to the explicit
+`(Missing category)` group; the orphan relationship remains a quality warning.
 
 An order with multiple sellers or categories contributes once to each applicable
 group. Group rows therefore answer an attribution question and are not additive to
@@ -113,8 +120,9 @@ related to fulfillment status or cohort age.
 ## Reconciliation and uncertainty
 
 Core counts and metrics are calculated independently in Python and SQL Server.
-Counts must match exactly; floating-point values must match within a documented
-tolerance. Power BI must then reconcile to the validated SQL/Python outputs.
+Counts must match exactly; floating-point values use zero relative tolerance and an
+absolute tolerance of `1e-4` in the reconciliation CLI. Power BI must then reconcile
+to the validated SQL/Python outputs.
 
 Percentiles use a continuous interpolation definition (`PERCENTILE_CONT` in SQL).
 Rates should be accompanied by denominators. Small group rankings are suppressed or
