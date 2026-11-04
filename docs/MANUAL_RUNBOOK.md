@@ -193,12 +193,12 @@ SELECT
     dataset_name,
     source_filename,
     source_sha256,
-    source_row_count,
+    expected_row_count,
     inserted_row_count,
     status,
     started_at_utc,
     completed_at_utc,
-    error_message
+    error_summary
 FROM audit.load_batches
 ORDER BY load_batch_id;
 ```
@@ -233,6 +233,7 @@ Where: WSL Bash, activated environment, project root.
 
 ```bash
 python scripts/validate_metrics.py \
+  --orders-csv data/raw/olist_orders_dataset.csv \
   --json-output reports/metric_reconciliation.json
 ```
 

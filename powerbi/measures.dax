@@ -7,19 +7,21 @@ COUNTROWS('Order Delivery')
 Delivery Eligible Orders =
 CALCULATE(
     [Orders],
-    'Order Delivery'[delivery_classification] IN { "On Time", "Late" }
+    'Order Delivery'[is_delivery_eligible] = 1
 )
 
 On-Time Orders =
 CALCULATE(
     [Orders],
-    'Order Delivery'[delivery_classification] = "On Time"
+    'Order Delivery'[is_delivery_eligible] = 1,
+    'Order Delivery'[is_late] = 0
 )
 
 Late Orders =
 CALCULATE(
     [Orders],
-    'Order Delivery'[delivery_classification] = "Late"
+    'Order Delivery'[is_delivery_eligible] = 1,
+    'Order Delivery'[is_late] = 1
 )
 
 On-Time Rate =
@@ -34,49 +36,50 @@ Delivery Status Excluded Orders =
 Duration Eligible Orders =
 CALCULATE(
     [Orders],
-    'Order Delivery'[duration_eligible] = 1
+    'Order Delivery'[is_duration_eligible] = 1
 )
 
 Average Delivery Days =
 CALCULATE(
-    AVERAGE('Order Delivery'[delivery_duration_days]),
-    'Order Delivery'[duration_eligible] = 1
+    DIVIDE(AVERAGE('Order Delivery'[delivery_duration_hours]), 24),
+    'Order Delivery'[is_duration_eligible] = 1
 )
 
 Median Delivery Days =
 CALCULATE(
     PERCENTILEX.INC(
         'Order Delivery',
-        'Order Delivery'[delivery_duration_days],
+        DIVIDE('Order Delivery'[delivery_duration_hours], 24),
         0.5
     ),
-    'Order Delivery'[duration_eligible] = 1
+    'Order Delivery'[is_duration_eligible] = 1
 )
 
 P90 Delivery Days =
 CALCULATE(
     PERCENTILEX.INC(
         'Order Delivery',
-        'Order Delivery'[delivery_duration_days],
+        DIVIDE('Order Delivery'[delivery_duration_hours], 24),
         0.9
     ),
-    'Order Delivery'[duration_eligible] = 1
+    'Order Delivery'[is_duration_eligible] = 1
 )
 
 P95 Delivery Days =
 CALCULATE(
     PERCENTILEX.INC(
         'Order Delivery',
-        'Order Delivery'[delivery_duration_days],
+        DIVIDE('Order Delivery'[delivery_duration_hours], 24),
         0.95
     ),
-    'Order Delivery'[duration_eligible] = 1
+    'Order Delivery'[is_duration_eligible] = 1
 )
 
-Average Days Early or Late =
+Average Days Late =
 CALCULATE(
-    AVERAGE('Order Delivery'[days_early_or_late]),
-    'Order Delivery'[delivery_classification] IN { "On Time", "Late" }
+    AVERAGE('Order Delivery'[days_late]),
+    'Order Delivery'[is_delivery_eligible] = 1,
+    'Order Delivery'[is_late] = 1
 )
 
 Reviewed Orders =

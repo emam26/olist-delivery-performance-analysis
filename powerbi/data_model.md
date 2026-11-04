@@ -15,11 +15,11 @@ export directories.
 | Power BI table | SQL view | Grain | Intended use |
 |---|---|---|---|
 | Order Delivery | `reporting.vw_order_delivery_detail` | One row per canonical order | Core cards, distributions, drill-through, and independently filtered metrics |
-| Monthly Delivery | `reporting.vw_delivery_performance_monthly` | Purchase month | Reconciled time trend |
-| State Delivery | `reporting.vw_delivery_performance_by_state` | Customer state | Geographic comparison |
-| Seller Delivery | `reporting.vw_delivery_performance_by_seller` | Distinct order-seller attribution | Seller comparison only; totals are not additive |
-| Category Delivery | `reporting.vw_delivery_performance_by_category` | Distinct order-category attribution | Product-category comparison only; totals are not additive |
-| Review Delivery | `reporting.vw_delivery_performance_by_review_score` | Selected review score | Descriptive association only |
+| Monthly Delivery | `reporting.vw_monthly_delivery` | Purchase month | Reconciled time trend |
+| State Delivery | `reporting.vw_state_delivery` | Customer state | Geographic comparison |
+| Seller Delivery | `reporting.vw_seller_delivery` | Distinct order-seller attribution | Seller comparison only; totals are not additive |
+| Category Delivery | `reporting.vw_category_delivery` | Distinct order-category attribution | Product-category comparison only; totals are not additive |
+| Review Delivery | `reporting.vw_review_delivery_distribution` | Selected review score | Descriptive association only |
 | Data Quality | `reporting.vw_latest_validation_results` | One validation result per check | Quality-status page and publication gate |
 
 ## Relationships
@@ -28,15 +28,15 @@ Keep the six summary tables disconnected. They contain metrics at different grai
 relating them to the order-level table would create ambiguous filtering and tempting
 but invalid totals.
 
-Create a calculated calendar table and relate `Calendar[Date]` one-to-many to
-`Order Delivery[order_purchase_date]`. Mark it as the date table. The monthly view
-may be used directly for the published trend after its values reconcile with the
-order-level measures.
+Use `Order Delivery[purchase_month]` or the monthly view for the purchase-month
+trend. The monthly view may be used directly for the published trend after its
+values reconcile with the order-level measures. The export contract does not
+include a separate order-purchase-date column.
 
 ```DAX
 Calendar =
-VAR FirstDate = MINX('Order Delivery', 'Order Delivery'[order_purchase_date])
-VAR LastDate = MAXX('Order Delivery', 'Order Delivery'[order_purchase_date])
+VAR FirstDate = MINX('Order Delivery', 'Order Delivery'[purchase_month])
+VAR LastDate = MAXX('Order Delivery', 'Order Delivery'[purchase_month])
 RETURN
     ADDCOLUMNS(
         CALENDAR(FirstDate, LastDate),
@@ -51,8 +51,7 @@ Sort `Calendar[Month]` by `Calendar[Year Month Sort]`.
 
 ## Semantic constraints
 
-- `On Time` and `Late` are mutually exclusive only inside the delivery-eligible
-  cohort.
+- `is_late` is interpreted only inside the `is_delivery_eligible = 1` cohort.
 - Delivery duration has its own eligibility flag. Do not use delivery-status
   eligibility as a substitute denominator.
 - Missing future or incomplete timestamps remain blank, not zero.

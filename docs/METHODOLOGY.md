@@ -35,9 +35,9 @@ join.
 
 ## Delivery classification
 
-An order is delivery-status eligible when both
-`order_delivered_customer_date` and `order_estimated_delivery_date` parse as valid
-timestamps.
+An order is delivery-status eligible when its normalized status is `delivered` and
+both `order_delivered_customer_date` and `order_estimated_delivery_date` parse as
+valid timestamps.
 
 The comparison uses calendar dates:
 
@@ -62,6 +62,10 @@ and customer-delivery timestamps parse and delivery is not earlier than purchase
 seconds. It is not rounded to calendar days. Average, median, P90, and P95 are
 reported for this cohort. Invalid or negative intervals remain excluded and visible
 through reason counts.
+
+The SQL analytical and reporting views store the same duration as
+`delivery_duration_hours`; Python and Power BI convert that field to fractional
+days when presenting the documented day-based KPIs.
 
 ## Canonical records and duplicates
 

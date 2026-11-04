@@ -61,7 +61,8 @@ confounders.
 ## Page 6 — Data quality and methodology
 
 - Validation run ID, execution UTC timestamp, and status.
-- Table of check ID, severity, status, observed value, expected value, and details.
+- Table of check ID, status, observed value, expected value, and safe message;
+  include Python-assigned severity when the combined validation artifact is loaded.
 - Source-file inventory counts and hashes if included in the import notes.
 - Metric definitions and exclusion rules.
 

@@ -90,11 +90,11 @@ Source grain is review record; multiple rows can refer to one order.
 
 ## Technical staging lineage
 
-Every `stg.*_raw` table includes:
+Every `stg.*` table includes:
 
 | Field | Meaning |
 |---|---|
-| `<table>_raw_id` | SQL identity for physical row lineage |
+| `staging_row_id` | SQL identity for physical row lineage |
 | `load_batch_id` | Foreign key to `audit.load_batches` |
 | `source_row_number` | One-based CSV data-row number |
 | `source_sha256` | Hash of the complete source file loaded in that batch |
@@ -108,7 +108,8 @@ remain observable.
 ### `audit.load_batches`
 
 One row per load attempt. Principal fields include dataset name, source file name,
-source hash, source byte/row counts, status (`Started`, `Succeeded`, or `Failed`),
+source hash, source byte count, expected and inserted row counts, status (`Started`,
+`Succeeded`, or `Failed`),
 start/completion UTC timestamps, inserted row count, and safe error text. A filtered
 unique index prevents two successful rows for the same dataset/hash pair.
 
@@ -119,8 +120,9 @@ status, and safe execution message.
 
 ### `audit.validation_results`
 
-One row per check in a validation run: check ID, severity, status, observed and
-expected values, and details.
+One row per check in a validation run: check ID, status, observed and expected
+values, and a safe message. Severity is assigned by the Python validation layer
+when inventory and SQL findings are combined.
 
 ## Principal analytical views
 
@@ -135,14 +137,14 @@ Grain: one canonical order.
 | `customer_state` | Customer geography |
 | `order_status` | Source order status |
 | `order_purchase_timestamp` | Typed purchase timestamp |
-| `order_purchase_date` / `purchase_month` | Derived date and month |
+| `purchase_month` | Derived purchase month |
 | `order_delivered_customer_timestamp` | Typed actual-delivery timestamp |
 | `order_estimated_delivery_timestamp` | Typed estimate timestamp |
-| `delivery_classification` | `On Time`, `Late`, or `Excluded` |
-| `delivery_eligible` | 1 only when delivery classification is possible |
-| `days_early_or_late` | Signed calendar-day difference |
-| `duration_eligible` | 1 only for valid nonnegative purchase-to-delivery interval |
-| `delivery_duration_days` | Fractional elapsed days |
+| `is_delivery_eligible` | 1 only when delivery classification is possible |
+| `is_late` | 1 when actual delivery is after the estimated calendar date |
+| `is_duration_eligible` | 1 only for a valid nonnegative purchase-to-delivery interval |
+| `delivery_duration_hours` | Fractional elapsed hours |
+| `days_late` | Positive calendar-day difference for late eligible orders |
 | `exclusion_reason` | Actionable reason for an unavailable core metric |
 | `selected_review_score` | One deterministic valid score, otherwise null |
 

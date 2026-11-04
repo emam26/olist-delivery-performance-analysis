@@ -6,7 +6,7 @@ otherwise, filters apply before the numerator and denominator are calculated.
 | KPI | Definition | Denominator / cohort | Null and exclusion behavior |
 |---|---|---|---|
 | All orders | Distinct canonical `order_id` count | Canonical orders | Duplicate raw keys are quality findings, not extra orders |
-| Delivery-eligible orders | Orders with valid actual and estimated delivery timestamps | All orders | Missing or invalid required timestamp is excluded |
+| Delivery-eligible orders | Delivered orders with valid actual and estimated delivery timestamps | All orders | Missing, invalid, or non-delivered status is excluded |
 | On-time orders | Eligible orders where actual calendar date <= estimated calendar date | Delivery-eligible orders | Never inferred from order status alone |
 | Late orders | Eligible orders where actual calendar date > estimated calendar date | Delivery-eligible orders | Same-date delivery is on time |
 | On-time rate | On-time orders / delivery-eligible orders | Delivery-eligible orders | Null when denominator is zero |
@@ -16,7 +16,7 @@ otherwise, filters apply before the numerator and denominator are calculated.
 | Duration-eligible orders | Orders with valid purchase and delivery timestamps and nonnegative interval | All orders | Evaluated independently of delivery-status eligibility |
 | Delivery duration days | `(delivered timestamp - purchase timestamp) / 86,400 seconds` | Duration-eligible orders | Fractional days retained; invalid/negative is null |
 | Average delivery days | Arithmetic mean of delivery duration | Duration-eligible orders | Null when cohort is empty |
-| Median delivery days | Continuous 50th percentile | Duration-eligible orders | SQL definition uses `PERCENTILE_CONT(0.5)` |
+| Median delivery days | Continuous 50th percentile | Duration-eligible orders | SQL definition uses `PERCENTILE_CONT(0.50)` |
 | P90 / P95 delivery days | Continuous 90th / 95th percentile | Duration-eligible orders | Tail metrics require denominator disclosure |
 | Reviewed orders | Orders with one selected valid review score from 1 to 5 | Canonical orders | Missing/invalid review remains unreviewed |
 | Average review score | Mean selected review score | Reviewed orders | Descriptive only |

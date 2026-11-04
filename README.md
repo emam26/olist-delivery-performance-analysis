@@ -7,11 +7,12 @@
 ![SQL Server](https://img.shields.io/badge/database-SQL%20Server-CC2927)
 ![Power BI](https://img.shields.io/badge/dashboard-Power%20BI-F2C811)
 
-The project addresses a practical question: **where do delivery delays appear in Olist's historical orders, and how do those orders compare with on-time deliveries?** The planned analysis uses SQL and Python to prepare the data and Power BI to present the findings.
+The project addresses a practical question: **where do delivery delays appear in Olist's historical orders, and how do those orders compare with on-time deliveries?** The implementation uses SQL and Python to prepare the data and Power BI to present the findings.
 
 > [!NOTE]
-> This repository currently documents the analysis plan. Implementation has not started.
-> No findings, dashboard screenshots, or performance results are claimed yet.
+> The implementation is present but has not been verified against the real source
+> data or a live SQL Server. No findings, dashboard screenshots, or performance
+> results are claimed yet.
 
 ## Purpose
 
@@ -38,7 +39,7 @@ The planned inputs are orders, order items, customers, sellers, products, and re
 
 The analysis will report group sizes beside rates. Small groups will not be ranked as though they provide equally reliable evidence.
 
-## Planned workflow
+## Workflow
 
 1. Download and inventory the original CSV files.
 2. Load them into SQL Server staging tables without silently discarding rows.
@@ -110,11 +111,11 @@ Differences between groups and associations with review scores will be described
 
 ## Current setup
 
-No runnable analysis or dashboard has been published yet. The first implementation step is to inventory the downloaded source files and create the staging load. Exact setup instructions and a findings section will be added when the corresponding work has been completed.
-> Implementation status (2026-11-04): the reproducible Python, SQL Server,
-> validation, and Power BI handoff layers are implemented but **NOT VERIFIED**. No
-> source data were downloaded, no command or SQL was executed, and no empirical
-> result is claimed.
+The reproducible Python, SQL Server, validation, and Power BI handoff layers are
+implemented but **NOT VERIFIED**. No source data were downloaded and no empirical
+result is claimed. Run the [manual runbook](docs/MANUAL_RUNBOOK.md) from a local
+environment to perform the offline checks, then the separately opt-in SQL Server
+steps.
 
 Start with the [manual runbook](docs/MANUAL_RUNBOOK.md). The implemented design is
 documented in [architecture](docs/ARCHITECTURE.md), [methodology](docs/METHODOLOGY.md),
