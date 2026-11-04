@@ -7,9 +7,10 @@ results into the repository before they are observed.
 ## Source and refresh provenance
 
 - Confirm all imported CSV files came from one export directory.
-- Compare every CSV byte count and SHA-256 hash with `manifest.json`.
-- Record the SQL database name, latest successful load-batch IDs, validation run ID,
-  and Power BI refresh UTC time.
+- Compare every CSV row count and SHA-256 hash with `manifest.json`.
+- Record the SQL database name, active dataset snapshot ID, source-manifest hash,
+  mapped load-batch IDs, validation run ID, and Power BI refresh UTC time.
+- Confirm the validation run's snapshot ID equals the active source snapshot ID.
 - Confirm no secret-bearing `.env` file or connection string is embedded in an
   exported artifact.
 
@@ -18,7 +19,9 @@ results into the repository before they are observed.
 - `Order Delivery` row count equals the canonical analytical-order count.
 - `DISTINCTCOUNT(order_id)` equals the same order count.
 - There are no blank or duplicate order IDs in the order-level table.
-- Monthly all-order counts sum to the order-level count.
+- Monthly source-order counts sum to the number of order-level rows with a nonblank
+  purchase month; separately disclose orders excluded because purchase month is
+  unavailable.
 - Seller and category counts are explicitly not expected to sum to the overall
   count because attribution is many-to-many.
 
@@ -28,15 +31,18 @@ For the unfiltered report, compare Power BI against both the SQL reporting view 
 the independent Python validation output:
 
 - all orders;
+- delivered orders;
 - delivery-eligible orders;
 - on-time orders;
 - late orders;
 - excluded delivery-status orders;
 - duration-eligible orders;
+- duration-excluded orders;
 - on-time and late rates;
 - average, median, P90, and P95 delivery duration.
 
-Rates must reconcile within the documented floating-point tolerance. Counts must
+Rates and continuous metrics must reconcile within the documented absolute
+tolerance of `1e-4` used by the reconciliation CLI. Counts must
 match exactly. `on_time_orders + late_orders` must equal eligible orders.
 
 ## Filter behavior
@@ -47,6 +53,8 @@ match exactly. `on_time_orders + late_orders` must equal eligible orders.
   accidental relationship.
 - Confirm groups below the minimum threshold are excluded from rankings but remain
   available for quality review.
+- Confirm `orders_without_usable_review` is not summed across review-score rows;
+  it is repeated class-level context in that summary view.
 
 ## Publication gate
 

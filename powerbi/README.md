@@ -7,7 +7,8 @@ not automate or claim to verify desktop UI operations.
 Use the SQL Server reporting views directly when the operator can reach SQL Server.
 The supported offline alternative is to import the CSV files created by
 `scripts/export_dashboard_data.py`; the export manifest records row counts and
-SHA-256 hashes for reconciliation.
+SHA-256 hashes plus active snapshot and validation provenance. Export is refused
+when the active snapshot has no completed Passed or Warning validation run.
 
 Read these files in order:
 
@@ -15,6 +16,10 @@ Read these files in order:
 2. `measures.dax` — denominator-safe measures and a calendar table definition.
 3. `dashboard_specification.md` — page-level visual and interaction design.
 4. `reconciliation.md` — checks required before publishing or taking screenshots.
+
+Build in that order. Import all eight reporting views (or all eight CSV files from
+one export directory), create the DAX measures, configure the single Calendar-to-
+Order Delivery relationship, then build the four pages in the specification.
 
 No dashboard result, screenshot, or performance claim is verified until the manual
 runbook checks have been completed against the operator's local data.

@@ -2,7 +2,13 @@
 // Column names follow reporting.vw_order_delivery_detail.
 
 Orders =
-COUNTROWS('Order Delivery')
+DISTINCTCOUNT('Order Delivery'[order_id])
+
+Delivered Orders =
+CALCULATE(
+    [Orders],
+    'Order Delivery'[is_delivered] = 1
+)
 
 Delivery Eligible Orders =
 CALCULATE(
@@ -38,6 +44,9 @@ CALCULATE(
     [Orders],
     'Order Delivery'[is_duration_eligible] = 1
 )
+
+Duration Excluded Orders =
+[Orders] - [Duration Eligible Orders]
 
 Average Delivery Days =
 CALCULATE(
@@ -94,18 +103,40 @@ CALCULATE(
     NOT ISBLANK('Order Delivery'[selected_review_score])
 )
 
-Minimum Group Size = 30
+Orders Without Usable Review =
+[Orders] - [Reviewed Orders]
 
-Eligible Group =
-IF([Delivery Eligible Orders] >= [Minimum Group Size], 1, 0)
+Minimum Group Size = 30
 
 // Optional title makes the observational scope explicit.
 Review Page Title =
-"Delivery timing and review score — descriptive association"
+"Delivery timing and review score - descriptive association"
 
 // Create this measure in Data Quality.
 Failed Quality Checks =
 CALCULATE(
     COUNTROWS('Data Quality'),
-    'Data Quality'[status] = "Failed"
+    'Data Quality'[check_status] = "Failed"
 )
+
+Warning Quality Checks =
+CALCULATE(
+    COUNTROWS('Data Quality'),
+    'Data Quality'[check_status] = "Warning"
+)
+
+Validation Status =
+SELECTEDVALUE('Data Quality'[run_status], "Not available")
+
+Validation Run ID =
+SELECTEDVALUE('Data Quality'[validation_run_id])
+
+// Create this measure in Source Provenance.
+Loaded Source Rows =
+SUM('Source Provenance'[inserted_row_count])
+
+Active Snapshot ID =
+SELECTEDVALUE('Source Provenance'[dataset_snapshot_id])
+
+Source Manifest Hash =
+SELECTEDVALUE('Source Provenance'[source_manifest_sha256], "Not available")

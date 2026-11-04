@@ -4,70 +4,68 @@ The dashboard is an analytical communication layer over validated reporting view
 It must not introduce new KPI definitions, silently alter denominators, or present
 observational associations as causal effects.
 
-## Page 1 — Executive overview
+## Page 1 - Delivery overview
 
-- Cards: eligible orders, on-time rate, late rate, average delivery days, median
-  delivery days, P90 delivery days.
+- Cards: delivered orders, eligible orders, on-time rate, late rate, average
+  delivery days, median delivery days, and P90 delivery days.
 - Monthly line chart: purchase month on the x-axis; on-time and late rates on a
-  shared percentage axis; eligible order count in the tooltip.
-- Exclusion bar: order counts by `exclusion_reason`.
-- Slicers: purchase date, customer state, order status.
+  shared percentage axis; eligible, excluded, and duration-eligible counts in the
+  tooltip.
+- Delivery-duration histogram filtered to `is_duration_eligible = 1`.
+- Separate exclusion bars for `delivery_exclusion_reason` and
+  `duration_exclusion_reason`; do not conflate the two cohorts.
+- Slicers: purchase month, customer state, order status.
 - Information panel: metric eligibility definitions, data refresh timestamp, and
   validation status.
 
 The cards must use the order-level measures. The monthly chart may use the monthly
 reporting view only after reconciliation.
 
-## Page 2 — Geographic performance
+## Page 2 - Regions and sellers
 
-- Ranked bar chart: customer state by on-time rate.
+- Ranked bar chart: customer state by late-delivery rate.
 - Scatter plot: eligible order count versus median delivery days; state as detail.
 - Table: state, all orders, eligible orders, on-time rate, late rate, median, P90,
   and excluded orders.
 - Visual filter: eligible orders at least the documented minimum group size.
 
-Use customer state, not seller state, and label that distinction visibly.
+Use customer state, not seller state, for the regional comparison. Add a seller
+scatter and table from `Seller Delivery`, with eligible count, rate, median, and P90
+in the tooltip. Add a compact category table from `Category Delivery` and retain
+`(Missing category)`. Apply `eligible_order_count >= 30` separately to each ranked
+summary and display the selected threshold.
 
-## Page 3 — Seller performance
+Display: "Multi-seller and multi-category orders are attributed once to every
+applicable group; group rows are not additive to the global order total."
 
-- Ranked table and scatter plot from `Seller Delivery`.
-- Include seller ID, attributed order count, eligible count, on-time rate, median,
-  and P90.
-- Apply the minimum group-size filter before ranking.
-- Display: "Orders with multiple sellers are attributed to each distinct seller;
-  seller rows are not additive to the overall order total."
+## Page 3 - Customer reviews
 
-Do not sum seller-level order counts into an executive total.
-
-## Page 4 — Product category performance
-
-- Ranked bar chart and detail table from `Category Delivery`.
-- Include an explicit `(Missing category)` label instead of hiding null categories.
-- Apply the minimum group-size filter before ranking.
-- Display the same non-additivity warning for multi-category orders.
-
-## Page 5 — Reviews and delivery
-
-- Distribution of selected review scores.
-- On-time rate and median delivery days by review score.
-- Eligible and reviewed denominators in every tooltip.
-- Optional Wilson confidence intervals where supplied by a validated export.
+- Cards from `Order Delivery`: reviewed orders, orders without a usable review, and
+  average selected review score.
+- Distribution of selected review scores using distinct reviewed orders.
+- On-time rate by selected review score, with eligible and reviewed denominators in
+  every tooltip.
+- Late/on-time score comparison from `Review Delivery`. Treat
+  `orders_without_usable_review` as a class-level value and never sum its repeated
+  value over score rows.
 - Persistent subtitle: "Descriptive association; no causal interpretation."
 
-Do not imply that late delivery alone caused a low review score. Product quality,
-service, customer expectations, and review-selection effects are plausible
-confounders.
+Product quality, service, geography, expectations, and review-selection effects are
+plausible confounders.
 
-## Page 6 — Data quality and methodology
+## Page 4 - Data quality
 
-- Validation run ID, execution UTC timestamp, and status.
-- Table of check ID, status, observed value, expected value, and safe message;
-  include Python-assigned severity when the combined validation artifact is loaded.
-- Source-file inventory counts and hashes if included in the import notes.
-- Metric definitions and exclusion rules.
+- Cards: validation status, failed and warning check counts, active snapshot ID,
+  validation run ID, and loaded source rows.
+- Validation table from `Data Quality`: check ID, check status, observed value,
+  expected value, and message.
+- Source table from `Source Provenance`: dataset, filename, expected and inserted
+  rows, source hash, batch ID, and completion time.
+- Exclusion indicators from `Order Delivery`: delivery-status excluded, duration
+  excluded, and orders without a usable review.
+- Methodology panel with KPI definitions and the source-manifest hash.
 
-Any failed critical check blocks publication. Warnings must be explained rather
-than hidden.
+Any failed check blocks publication. Warnings must be investigated and disclosed.
 
 ## Interaction and accessibility requirements
 
