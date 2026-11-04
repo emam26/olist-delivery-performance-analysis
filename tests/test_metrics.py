@@ -30,6 +30,7 @@ def test_delivery_on_estimated_calendar_date_is_on_time() -> None:
     outcome = classify_order(_order())
 
     assert outcome.delivery_classification == "On Time"
+    assert outcome.delivered is True
     assert outcome.delivery_eligible is True
     assert outcome.days_early_or_late == 0
     assert outcome.duration_eligible is True
@@ -50,6 +51,15 @@ def test_missing_estimate_excludes_status_but_not_valid_duration() -> None:
     assert outcome.delivery_eligible is False
     assert outcome.duration_eligible is True
     assert outcome.delivery_duration_days is not None
+
+
+def test_non_delivered_status_is_not_counted_as_delivered_or_eligible() -> None:
+    outcome = classify_order(_order(order_status="canceled"))
+
+    assert outcome.delivered is False
+    assert outcome.delivery_eligible is False
+    assert outcome.delivery_classification == "Excluded"
+    assert outcome.duration_eligible is True
 
 
 def test_negative_duration_is_not_replaced_with_zero() -> None:
@@ -86,6 +96,7 @@ def test_aggregate_kpis_preserve_independent_denominators() -> None:
     metrics = aggregate_delivery_kpis(outcomes)
 
     assert metrics.all_orders == 4
+    assert metrics.delivered_orders == 4
     assert metrics.delivery_eligible_orders == 3
     assert metrics.on_time_orders == 2
     assert metrics.late_orders == 1
@@ -126,6 +137,30 @@ def test_review_selection_is_deterministic() -> None:
     assert selected["review_id"] == "newer"
 
 
+def test_review_selection_uses_stable_key_and_source_row_tie_breakers() -> None:
+    selected = select_review_for_order(
+        [
+            {
+                "review_id": "same-id",
+                "review_score": "2",
+                "review_creation_date": "2018-01-01 00:00:00",
+                "review_answer_timestamp": "2018-01-02 00:00:00",
+                "source_row_number": 2,
+            },
+            {
+                "review_id": "same-id",
+                "review_score": "4",
+                "review_creation_date": "2018-01-01 00:00:00",
+                "review_answer_timestamp": "2018-01-02 00:00:00",
+                "source_row_number": 3,
+            },
+        ]
+    )
+
+    assert selected is not None
+    assert selected["review_score"] == "4"
+
+
 def test_bridges_deduplicate_order_group_pairs() -> None:
     items = [
         {
@@ -153,5 +188,13 @@ def test_bridges_deduplicate_order_group_pairs() -> None:
     assert build_order_seller_bridge(items) == {("order-1", "seller-1")}
     assert build_order_category_bridge(items, products) == {
         ("order-1", "books"),
+        ("order-1", "(Missing category)"),
+    }
+
+
+def test_category_bridge_keeps_item_with_missing_product_lookup() -> None:
+    items = [{"order_id": "order-1", "product_id": "orphan-product"}]
+
+    assert build_order_category_bridge(items, []) == {
         ("order-1", "(Missing category)"),
     }

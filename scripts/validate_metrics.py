@@ -15,12 +15,15 @@ from olist_delivery.validation import reconcile_metric_values
 
 RECONCILIATION_KEYS = (
     "source_order_count",
+    "delivered_order_count",
     "eligible_order_count",
+    "delivery_status_excluded_order_count",
     "on_time_order_count",
     "late_order_count",
     "on_time_delivery_rate",
     "late_delivery_rate",
     "duration_eligible_order_count",
+    "duration_excluded_order_count",
     "average_delivery_hours",
     "median_delivery_hours",
     "p90_delivery_hours",
@@ -81,7 +84,9 @@ def main() -> int:
             report["sql_metrics"] = sql_metrics
             report["reconciliation"] = [asdict(finding) for finding in findings]
             failed = any(finding.status.lower() == "failed" for finding in findings)
+            report["status"] = "failed" if failed else "passed"
         else:
+            report["status"] = "not_evaluated"
             report["sql_reconciliation"] = "NOT RUN"
         if args.output.exists():
             raise FileExistsError(f"metric report already exists: {args.output}")

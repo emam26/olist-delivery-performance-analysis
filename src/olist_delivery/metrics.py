@@ -21,69 +21,6 @@ def parse_source_timestamp(value: Any) -> datetime | None:
         return None
 
 
-@dataclass(frozen=True, slots=True)
-class _LegacyOrderDeliveryMetric:
-    """One order-level classification independent of item and review joins."""
-
-    order_id: str
-    is_delivery_eligible: bool
-    is_late: bool | None
-    is_duration_eligible: bool
-    delivery_duration_hours: float | None
-    days_late: int | None
-    exclusion_reason: str | None
-
-
-def _legacy_classify_order(order: Mapping[str, Any]) -> _LegacyOrderDeliveryMetric:
-    """Apply the documented calendar-date and duration rules to one order."""
-
-    order_id = str(order.get("order_id") or "")
-    status = str(order.get("order_status") or "").strip().lower()
-    purchase_raw = order.get("order_purchase_timestamp")
-    actual_raw = order.get("order_delivered_customer_date")
-    estimated_raw = order.get("order_estimated_delivery_date")
-    purchase = parse_source_timestamp(purchase_raw)
-    actual = parse_source_timestamp(actual_raw)
-    estimated = parse_source_timestamp(estimated_raw)
-
-    if status != "delivered":
-        eligibility_reason = "status_not_delivered"
-    elif actual is None:
-        eligibility_reason = "missing_or_invalid_actual_delivery"
-    elif estimated is None:
-        eligibility_reason = "missing_or_invalid_estimated_delivery"
-    else:
-        eligibility_reason = None
-
-    is_delivery_eligible = eligibility_reason is None
-    is_late = actual.date() > estimated.date() if is_delivery_eligible else None
-    days_late = (actual.date() - estimated.date()).days if is_late else None
-
-    duration_hours = None
-    is_duration_eligible = False
-    duration_reason = None
-    if purchase is None:
-        duration_reason = "missing_or_invalid_purchase_timestamp"
-    elif actual is None:
-        duration_reason = "missing_or_invalid_actual_delivery"
-    elif actual < purchase:
-        duration_reason = "negative_delivery_interval"
-    else:
-        is_duration_eligible = True
-        duration_hours = (actual - purchase).total_seconds() / 3600.0
-
-    exclusion_reason = eligibility_reason or duration_reason
-    return _LegacyOrderDeliveryMetric(
-        order_id=order_id,
-        is_delivery_eligible=is_delivery_eligible,
-        is_late=is_late,
-        is_duration_eligible=is_duration_eligible,
-        delivery_duration_hours=duration_hours,
-        days_late=days_late,
-        exclusion_reason=exclusion_reason,
-    )
-
-
 def percentile_cont(values: Sequence[float], percentile: float) -> float | None:
     """Match SQL Server PERCENTILE_CONT linear interpolation for finite values."""
 
@@ -99,36 +36,6 @@ def percentile_cont(values: Sequence[float], percentile: float) -> float | None:
         return float(ordered[lower])
     weight = rank - lower
     return float(ordered[lower] + (ordered[upper] - ordered[lower]) * weight)
-
-
-def _legacy_aggregate_delivery_metrics(orders: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
-    """Aggregate order-level KPIs with explicit numerators and denominators."""
-
-    classified = tuple(classify_order(order) for order in orders)
-    eligible = tuple(item for item in classified if item.is_delivery_eligible)
-    late = tuple(item for item in eligible if item.is_late is True)
-    on_time = tuple(item for item in eligible if item.is_late is False)
-    durations = [
-        item.delivery_duration_hours
-        for item in classified
-        if item.delivery_duration_hours is not None
-    ]
-    late_days = [float(item.days_late) for item in late if item.days_late is not None]
-    denominator = len(eligible)
-    return {
-        "source_order_count": len(classified),
-        "eligible_order_count": denominator,
-        "on_time_order_count": len(on_time),
-        "late_order_count": len(late),
-        "on_time_delivery_rate": len(on_time) / denominator if denominator else None,
-        "late_delivery_rate": len(late) / denominator if denominator else None,
-        "duration_eligible_order_count": len(durations),
-        "average_delivery_hours": fmean(durations) if durations else None,
-        "median_delivery_hours": median(durations) if durations else None,
-        "p90_delivery_hours": percentile_cont(durations, 0.90),
-        "p95_delivery_hours": percentile_cont(durations, 0.95),
-        "average_days_late": fmean(late_days) if late_days else None,
-    }
 
 
 def _usable_review_score(review: Mapping[str, Any]) -> int | None:
@@ -201,6 +108,7 @@ class OrderDeliveryMetric:
     """One order-level delivery outcome with independent eligibility cohorts."""
 
     order_id: str
+    delivered: bool
     delivery_classification: str
     delivery_eligible: bool
     days_early_or_late: int | None
@@ -288,6 +196,7 @@ def classify_order(order: Mapping[str, Any]) -> OrderDeliveryMetric:
     )
     return OrderDeliveryMetric(
         order_id=order_id,
+        delivered=status == "delivered",
         delivery_classification=classification,
         delivery_eligible=delivery_eligible,
         days_early_or_late=days_early_or_late,
@@ -303,6 +212,7 @@ class DeliveryKpis:
     """Aggregated delivery KPIs with explicit denominators."""
 
     all_orders: int
+    delivered_orders: int
     delivery_eligible_orders: int
     on_time_orders: int
     late_orders: int
@@ -322,6 +232,14 @@ class DeliveryKpis:
     @property
     def eligible_order_count(self) -> int:
         return self.delivery_eligible_orders
+
+    @property
+    def delivery_status_excluded_orders(self) -> int:
+        return self.all_orders - self.delivery_eligible_orders
+
+    @property
+    def duration_excluded_orders(self) -> int:
+        return self.all_orders - self.duration_eligible_orders
 
     @property
     def on_time_order_count(self) -> int:
@@ -374,6 +292,7 @@ def aggregate_delivery_kpis(
     denominator = len(eligible)
     return DeliveryKpis(
         all_orders=len(materialized),
+        delivered_orders=sum(item.delivered for item in materialized),
         delivery_eligible_orders=denominator,
         on_time_orders=len(on_time),
         late_orders=len(late),
@@ -401,12 +320,15 @@ def aggregate_delivery_metrics(
     metrics = aggregate_delivery_kpis(outcomes)
     return {
         "source_order_count": metrics.all_orders,
+        "delivered_order_count": metrics.delivered_orders,
         "eligible_order_count": metrics.delivery_eligible_orders,
+        "delivery_status_excluded_order_count": metrics.delivery_status_excluded_orders,
         "on_time_order_count": metrics.on_time_orders,
         "late_order_count": metrics.late_orders,
         "on_time_delivery_rate": metrics.on_time_rate,
         "late_delivery_rate": metrics.late_rate,
         "duration_eligible_order_count": metrics.duration_eligible_orders,
+        "duration_excluded_order_count": metrics.duration_excluded_orders,
         "average_delivery_hours": (
             metrics.average_delivery_days * 24
             if metrics.average_delivery_days is not None
@@ -458,5 +380,7 @@ def build_order_category_bridge(
     return {
         (str(item["order_id"]), category)
         for item in items
-        if item.get("order_id") and (category := categories.get(str(item.get("product_id")), ""))
+        if item.get("order_id")
+        and str(item.get("product_id") or "").strip()
+        and (category := categories.get(str(item.get("product_id")), missing_category))
     }

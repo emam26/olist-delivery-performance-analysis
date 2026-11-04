@@ -30,12 +30,15 @@ EXPORT_SPECS: tuple[ExportSpec, ...] = (
             "customer_state",
             "purchase_month",
             "order_status",
+            "is_delivered",
             "is_delivery_eligible",
             "is_late",
             "is_duration_eligible",
             "delivery_duration_hours",
             "days_late",
             "selected_review_score",
+            "delivery_exclusion_reason",
+            "duration_exclusion_reason",
             "exclusion_reason",
         ),
         ("order_id",),
@@ -45,11 +48,16 @@ EXPORT_SPECS: tuple[ExportSpec, ...] = (
         "reporting.vw_monthly_delivery",
         (
             "purchase_month",
+            "source_order_count",
+            "delivered_order_count",
             "eligible_order_count",
+            "delivery_status_excluded_order_count",
             "on_time_order_count",
             "late_order_count",
             "on_time_delivery_rate",
             "late_delivery_rate",
+            "duration_eligible_order_count",
+            "duration_excluded_order_count",
             "average_delivery_hours",
             "median_delivery_hours",
             "p90_delivery_hours",
@@ -62,11 +70,19 @@ EXPORT_SPECS: tuple[ExportSpec, ...] = (
         "reporting.vw_state_delivery",
         (
             "customer_state",
+            "source_order_count",
+            "delivered_order_count",
             "eligible_order_count",
+            "delivery_status_excluded_order_count",
+            "on_time_order_count",
             "late_order_count",
+            "on_time_delivery_rate",
             "late_delivery_rate",
+            "duration_eligible_order_count",
+            "duration_excluded_order_count",
             "average_delivery_hours",
             "median_delivery_hours",
+            "p90_delivery_hours",
         ),
         ("customer_state",),
     ),
@@ -76,11 +92,19 @@ EXPORT_SPECS: tuple[ExportSpec, ...] = (
         (
             "seller_id",
             "seller_state",
+            "source_order_count",
+            "delivered_order_count",
             "eligible_order_count",
+            "delivery_status_excluded_order_count",
+            "on_time_order_count",
             "late_order_count",
+            "on_time_delivery_rate",
             "late_delivery_rate",
+            "duration_eligible_order_count",
+            "duration_excluded_order_count",
             "average_delivery_hours",
             "median_delivery_hours",
+            "p90_delivery_hours",
         ),
         ("seller_id",),
     ),
@@ -89,11 +113,19 @@ EXPORT_SPECS: tuple[ExportSpec, ...] = (
         "reporting.vw_category_delivery",
         (
             "product_category_name",
+            "source_order_count",
+            "delivered_order_count",
             "eligible_order_count",
+            "delivery_status_excluded_order_count",
+            "on_time_order_count",
             "late_order_count",
+            "on_time_delivery_rate",
             "late_delivery_rate",
+            "duration_eligible_order_count",
+            "duration_excluded_order_count",
             "average_delivery_hours",
             "median_delivery_hours",
+            "p90_delivery_hours",
         ),
         ("product_category_name",),
     ),
@@ -102,6 +134,40 @@ EXPORT_SPECS: tuple[ExportSpec, ...] = (
         "reporting.vw_review_delivery_distribution",
         ("delivery_class", "review_score", "review_count", "orders_without_usable_review"),
         ("delivery_class", "review_score"),
+    ),
+    ExportSpec(
+        "source_provenance.csv",
+        "reporting.vw_current_source_provenance",
+        (
+            "dataset_snapshot_id",
+            "source_manifest_sha256",
+            "dataset_name",
+            "load_batch_id",
+            "source_filename",
+            "source_sha256",
+            "expected_row_count",
+            "inserted_row_count",
+            "completed_at_utc",
+        ),
+        ("dataset_name",),
+    ),
+    ExportSpec(
+        "validation_results.csv",
+        "reporting.vw_latest_validation_results",
+        (
+            "validation_run_id",
+            "dataset_snapshot_id",
+            "source_manifest_sha256",
+            "run_status",
+            "started_at_utc",
+            "completed_at_utc",
+            "check_id",
+            "check_status",
+            "observed_value",
+            "expected_value",
+            "message",
+        ),
+        ("check_id",),
     ),
 )
 
@@ -114,17 +180,68 @@ def _file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _validated_export_context(connection: Any) -> dict[str, Any]:
+    cursor = connection.cursor()
+    cursor.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+    cursor.execute(
+        """
+        SELECT TOP (1) dataset_snapshot_id, source_manifest_sha256
+        FROM audit.dataset_snapshots AS snapshots WITH (HOLDLOCK)
+        WHERE status = 'Succeeded' AND dataset_count = 6
+          AND (SELECT COUNT_BIG(*)
+               FROM audit.dataset_snapshot_batches AS mappings
+               INNER JOIN audit.load_batches AS batches
+                   ON batches.load_batch_id = mappings.load_batch_id
+                  AND batches.dataset_name = mappings.dataset_name
+                  AND batches.source_sha256 = mappings.source_sha256
+                  AND batches.status = 'Succeeded'
+               WHERE mappings.dataset_snapshot_id = snapshots.dataset_snapshot_id) = 6
+        ORDER BY dataset_snapshot_id DESC
+        """
+    )
+    snapshot = cursor.fetchone()
+    if snapshot is None:
+        raise RuntimeError("no successful complete dataset snapshot is available for export")
+
+    cursor.execute(
+        """
+        SELECT TOP (1) validation_run_id, status, completed_at_utc
+        FROM audit.validation_runs
+        WHERE dataset_snapshot_id = ? AND completed_at_utc IS NOT NULL
+        ORDER BY validation_run_id DESC
+        """,
+        (int(snapshot[0]),),
+    )
+    validation = cursor.fetchone()
+    if validation is None:
+        raise RuntimeError("the current dataset snapshot has no completed SQL validation run")
+    validation_status = str(validation[1])
+    if validation_status not in {"Passed", "Warning"}:
+        raise RuntimeError(
+            f"the current dataset snapshot is not exportable; validation status={validation_status}"
+        )
+    return {
+        "dataset_snapshot_id": int(snapshot[0]),
+        "source_manifest_sha256": str(snapshot[1]),
+        "validation_run_id": int(validation[0]),
+        "validation_status": validation_status,
+        "validation_completed_at_utc": str(validation[2]),
+    }
+
+
 def export_reporting_views(connection: Any, output_directory: Path) -> Path:
     """Export all configured views and provenance without overwriting a run."""
 
     if output_directory.exists():
         raise FileExistsError(f"export directory already exists: {output_directory}")
-    output_directory.mkdir(parents=True)
-    manifest: dict[str, Any] = {
-        "exported_at_utc": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
-        "files": [],
-    }
     try:
+        context = _validated_export_context(connection)
+        output_directory.mkdir(parents=True)
+        manifest: dict[str, Any] = {
+            "exported_at_utc": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            "provenance": context,
+            "files": [],
+        }
         for spec in EXPORT_SPECS:
             columns = ", ".join(spec.columns)
             ordering = ", ".join(spec.order_by)
@@ -152,6 +269,7 @@ def export_reporting_views(connection: Any, output_directory: Path) -> Path:
                     ),
                 }
             )
+        connection.rollback()
         manifest_path = output_directory / "manifest.json"
         manifest_path.write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n",
@@ -160,4 +278,5 @@ def export_reporting_views(connection: Any, output_directory: Path) -> Path:
         return manifest_path
     except Exception:
         # Preserve partial files for diagnosis; never mislabel the directory as complete.
+        connection.rollback()
         raise
