@@ -12,8 +12,14 @@ class DatasetSpec:
     name: str
     filename: str
     columns: tuple[str, ...]
-    key_columns: tuple[str, ...]
+    natural_key: tuple[str, ...]
     timestamp_columns: tuple[str, ...] = ()
+
+    @property
+    def key_columns(self) -> tuple[str, ...]:
+        """Compatibility name for the declared natural key."""
+
+        return self.natural_key
 
 
 DATASET_SPECS: tuple[DatasetSpec, ...] = (

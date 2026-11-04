@@ -5,13 +5,14 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Sequence
+from typing import Any
 
 from .database import safe_database_error
 from .datasets import DATASET_SPECS, DatasetSpec
-from .inventory import sha256_file
+from .inventory import InventoryReport, sha256_file
 
 STAGING_TABLES = {
     "orders": "stg.orders",
@@ -25,6 +26,10 @@ STAGING_TABLES = {
 
 class DatasetLoadError(RuntimeError):
     """Raised when a source file cannot be loaded without row loss."""
+
+
+class CsvValidationError(DatasetLoadError):
+    """Raised when a source CSV violates its declared contract."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,18 +47,19 @@ class LoadOutcome:
 
 def _validate_header(path: Path, spec: DatasetSpec) -> None:
     if not path.is_file():
-        raise DatasetLoadError(f"required source file is missing: {path}")
+        raise CsvValidationError(f"required source file is missing: {path}")
     with path.open("r", encoding="utf-8-sig", newline="") as source:
         reader = csv.reader(source, strict=True)
         try:
             headers = tuple(next(reader))
         except StopIteration as exc:
-            raise DatasetLoadError(f"source file is empty: {path}") from exc
+            raise CsvValidationError(f"source file is empty: {path}") from exc
     if headers != spec.columns:
         missing = sorted(set(spec.columns) - set(headers))
         unexpected = sorted(set(headers) - set(spec.columns))
-        raise DatasetLoadError(
-            f"incorrect CSV header for {spec.filename}; missing={missing}; unexpected={unexpected}; "
+        raise CsvValidationError(
+            f"incorrect CSV header for {spec.filename}; missing={missing}; "
+            f"unexpected={unexpected}; "
             "column order must match the documented source contract"
         )
 
@@ -66,8 +72,8 @@ def iter_source_rows(path: Path, spec: DatasetSpec) -> Iterator[tuple[int, tuple
         with path.open("r", encoding="utf-8-sig", newline="") as source:
             reader = csv.DictReader(source, strict=True)
             for source_row_number, row in enumerate(reader, start=2):
-                if None in row:
-                    raise DatasetLoadError(
+                if None in row or any(row.get(column) is None for column in spec.columns):
+                    raise CsvValidationError(
                         f"malformed CSV record in {spec.filename} at source line "
                         f"{source_row_number}"
                     )
@@ -152,7 +158,7 @@ class SqlServerDatasetLoader:
         source_sha256: str,
         source_byte_count: int,
         expected_row_count: int | None,
-        error_summary: str,
+        error_message: str,
     ) -> None:
         cursor = self.connection.cursor()
         cursor.execute(
@@ -171,7 +177,7 @@ class SqlServerDatasetLoader:
                 source_sha256,
                 source_byte_count,
                 expected_row_count,
-                error_summary,
+                error_message,
             ),
         )
         self.connection.commit()
@@ -193,7 +199,7 @@ class SqlServerDatasetLoader:
             return LoadOutcome(
                 spec.name,
                 path.name,
-                "SkippedDuplicate",
+                "skipped",
                 existing_batch,
                 expected_row_count or 0,
                 0,
@@ -248,7 +254,7 @@ class SqlServerDatasetLoader:
             return LoadOutcome(
                 spec.name,
                 path.name,
-                "Succeeded",
+                "succeeded",
                 load_batch_id,
                 inserted,
                 inserted,
@@ -264,7 +270,7 @@ class SqlServerDatasetLoader:
                     source_sha256,
                     source_byte_count,
                     expected_row_count,
-                    error_summary,
+                    error_message=error_summary,
                 )
             except Exception:
                 self.connection.rollback()
@@ -273,17 +279,37 @@ class SqlServerDatasetLoader:
                 f"{error_summary}"
             ) from exc
 
+    def load_dataset(
+        self,
+        spec: DatasetSpec,
+        path: Path,
+        *,
+        expected_row_count: int | None = None,
+    ) -> LoadOutcome:
+        """Load one dataset using the canonical loader method name."""
+
+        return self.load_file(
+            spec,
+            path,
+            expected_row_count=expected_row_count,
+        )
+
 
 def load_required_files(
     connection: Any,
     data_directory: Path,
-    inventory_report: dict[str, Any],
+    inventory_report: Mapping[str, Any] | InventoryReport,
     *,
     batch_size: int,
 ) -> tuple[LoadOutcome, ...]:
     """Load all required files using row counts from a passed inventory report."""
 
-    inventory_by_name = {item["dataset"]: item for item in inventory_report["files"]}
+    payload = (
+        inventory_report.to_dict()
+        if isinstance(inventory_report, InventoryReport)
+        else inventory_report
+    )
+    inventory_by_name = {item["dataset"]: item for item in payload["files"]}
     loader = SqlServerDatasetLoader(connection, batch_size)
     outcomes = []
     for spec in DATASET_SPECS:
@@ -293,7 +319,7 @@ def load_required_files(
                 f"inventory for {spec.name} is absent or failed; loading is blocked"
             )
         outcomes.append(
-            loader.load_file(
+            loader.load_dataset(
                 spec,
                 data_directory / spec.filename,
                 expected_row_count=int(evidence["row_count"]),

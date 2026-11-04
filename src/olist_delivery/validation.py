@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from .data_quality import ValidationFinding
 
@@ -18,7 +19,8 @@ def inventory_findings(report: Mapping[str, Any]) -> tuple[ValidationFinding, ..
             findings.append(
                 ValidationFinding(
                     f"source.{dataset}.presence",
-                    "failed",
+                    "Critical",
+                    "Failed",
                     "missing",
                     "present",
                     str(item.get("errors", ["required file is missing"])[0]),
@@ -29,36 +31,47 @@ def inventory_findings(report: Mapping[str, Any]) -> tuple[ValidationFinding, ..
             (
                 ValidationFinding(
                     f"source.{dataset}.headers",
-                    "passed" if not item.get("missing_headers") else "failed",
+                    "Critical",
+                    "Passed" if not item.get("missing_headers") else "Failed",
                     str(item.get("headers", [])),
                     str(item.get("required_headers", [])),
                     "required CSV header contract",
                 ),
                 ValidationFinding(
                     f"source.{dataset}.declared_grain",
-                    "passed" if item.get("duplicate_key_rows", 0) == 0 else "failed",
-                    str(item.get("duplicate_key_rows", 0)),
+                    "Critical",
+                    "Passed" if item.get("duplicate_natural_key_count", 0) == 0 else "Failed",
+                    str(item.get("duplicate_natural_key_count", 0)),
                     "0 duplicate rows",
                     "duplicates remain preserved for inspection",
                 ),
                 ValidationFinding(
                     f"source.{dataset}.malformed_rows",
-                    "passed" if item.get("malformed_rows", 0) == 0 else "failed",
-                    str(item.get("malformed_rows", 0)),
+                    "Critical",
+                    "Passed" if item.get("malformed_record_count", 0) == 0 else "Failed",
+                    str(item.get("malformed_record_count", 0)),
                     "0 malformed rows",
                     "malformed source records are never silently discarded",
                 ),
             )
         )
     for relationship in report.get("relationships", []):
-        status = str(relationship.get("status", "not_evaluated"))
+        status = str(relationship.get("status", "not_evaluated")).lower()
         if status not in {"passed", "warning", "failed", "not_evaluated"}:
             status = "failed"
-        observed = relationship.get("orphan_rows", relationship.get("order_count", "unknown"))
+        observed = relationship.get("observed_count", "unknown")
+        severity = "Critical" if status == "failed" else "Warning"
+        status_name = {
+            "passed": "Passed",
+            "warning": "Warning",
+            "failed": "Failed",
+            "not_evaluated": "NotEvaluated",
+        }[status]
         findings.append(
             ValidationFinding(
-                f"relationship.{relationship['name']}",
-                status,  # type: ignore[arg-type]
+                f"relationship.{relationship['check_id']}",
+                severity,
+                status_name,
                 str(observed),
                 "0 or documented source exception",
                 str(relationship.get("message", "source relationship check")),
@@ -96,7 +109,8 @@ def reconcile_metric_values(
         findings.append(
             ValidationFinding(
                 f"metric.{name}",
-                "passed" if agrees else "failed",
+                "Critical",
+                "Passed" if agrees else "Failed",
                 f"python={python_value!r}; sql={sql_value!r}",
                 f"agreement within {tolerance}",
                 "independent Python-to-SQL reconciliation",

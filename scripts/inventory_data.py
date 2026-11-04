@@ -8,7 +8,7 @@ from pathlib import Path
 from olist_delivery.config import load_project_settings
 from olist_delivery.inventory import (
     InventoryError,
-    inventory_dataset,
+    build_inventory,
     inventory_summary,
     write_inventory_report,
 )
@@ -31,14 +31,14 @@ def main() -> int:
     settings = load_project_settings()
     data_directory = args.data_directory or settings.data_directory
     try:
-        report = inventory_dataset(data_directory)
+        report = build_inventory(data_directory)
         write_inventory_report(report, args.output, overwrite=args.overwrite)
     except (InventoryError, OSError) as exc:
         print(f"Inventory failed: {exc}")
         return 1
     print(inventory_summary(report))
     print(f"Inventory report: {args.output}")
-    return 1 if report["status"] == "failed" else 0
+    return 1 if report.status == "failed" else 0
 
 
 if __name__ == "__main__":

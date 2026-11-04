@@ -6,7 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
-from olist_delivery.config import load_project_settings
+from olist_delivery.config import load_settings
 from olist_delivery.database import database_connection, safe_database_error
 from olist_delivery.load_data import DatasetLoadError, load_required_files
 
@@ -14,8 +14,10 @@ from olist_delivery.load_data import DatasetLoadError, load_required_files
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
+        "--inventory",
         "--inventory-report",
         type=Path,
+        dest="inventory_report",
         default=Path("reports/inventory/inventory.json"),
     )
     parser.add_argument("--data-directory", type=Path)
@@ -24,13 +26,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
-    settings = load_project_settings()
-    data_directory = args.data_directory or settings.data_directory
+    settings = load_settings()
+    data_directory = args.data_directory or settings.raw_data_directory
     try:
         inventory = json.loads(args.inventory_report.read_text(encoding="utf-8"))
         if inventory.get("status") == "failed":
             raise DatasetLoadError("inventory status is failed; resolve source issues first")
-        with database_connection() as connection:
+        with database_connection(settings.database) as connection:
             outcomes = load_required_files(
                 connection,
                 data_directory,
