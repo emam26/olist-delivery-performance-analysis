@@ -111,3 +111,14 @@ Differences between groups and associations with review scores will be described
 ## Current setup
 
 No runnable analysis or dashboard has been published yet. The first implementation step is to inventory the downloaded source files and create the staging load. Exact setup instructions and a findings section will be added when the corresponding work has been completed.
+> Implementation status (2026-11-04): the reproducible Python, SQL Server,
+> validation, and Power BI handoff layers are implemented but **NOT VERIFIED**. No
+> source data were downloaded, no command or SQL was executed, and no empirical
+> result is claimed.
+
+Start with the [manual runbook](docs/MANUAL_RUNBOOK.md). The implemented design is
+documented in [architecture](docs/ARCHITECTURE.md), [methodology](docs/METHODOLOGY.md),
+[KPI definitions](docs/KPI_DEFINITIONS.md), and the
+[implementation status](docs/IMPLEMENTATION_STATUS.md). Source CSV files,
+credentials, generated reports, and database artifacts are intentionally excluded
+from version control.

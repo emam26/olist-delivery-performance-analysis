@@ -1,0 +1,42 @@
+.venv/
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+*.log
+
+# Raw/source data and archives
+data/raw/*
+!data/raw/.gitkeep
+*.csv
+*.zip
+*.7z
+*.tar
+*.gz
+
+# Generated reports and exports
+data/processed/*
+!data/processed/.gitkeep
+reports/exports/*
+!reports/exports/.gitkeep
+reports/inventory/*
+!reports/inventory/.gitkeep
+
+# SQL Server and backup artifacts
+*.bak
+*.mdf
+*.ndf
+*.ldf
+
+# Local editor and OS state
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
