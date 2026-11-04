@@ -22,6 +22,10 @@ data/raw/*
 *.gz
 
 # Generated reports and exports
+reports/*
+!reports/.gitkeep
+!reports/exports/
+!reports/inventory/
 data/processed/*
 !data/processed/.gitkeep
 reports/exports/*
