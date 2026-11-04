@@ -302,9 +302,10 @@ GO
 
 CREATE OR ALTER VIEW analytics.vw_order_category_bridge
 AS
-SELECT DISTINCT i.order_id, p.product_category_name
+SELECT DISTINCT i.order_id,
+       COALESCE(p.product_category_name, N'(Missing category)') AS product_category_name
 FROM analytics.vw_order_items AS i
 INNER JOIN analytics.vw_products_canonical AS p ON p.product_id = i.product_id
 WHERE NULLIF(LTRIM(RTRIM(i.order_id)), N'') IS NOT NULL
-  AND p.product_category_name IS NOT NULL;
+  AND p.product_id IS NOT NULL;
 GO

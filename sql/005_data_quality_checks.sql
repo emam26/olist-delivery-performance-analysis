@@ -311,7 +311,7 @@ BEGIN
             N'grain.order_category_bridge_unique',
             CASE WHEN @category_bridge_duplicates = 0 THEN 'Passed' ELSE 'Failed' END,
             CONVERT(nvarchar(1000), @category_bridge_duplicates), N'0 duplicate bridge keys',
-            N'Bridge grain is one row per distinct order and valid category.'
+            N'Bridge grain is one row per distinct order and category, including the missing-category label.'
         );
 
         DECLARE @eligible bigint, @on_time bigint, @late bigint;
