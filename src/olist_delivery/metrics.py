@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from statistics import fmean, median
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 
 def parse_source_timestamp(value: Any) -> datetime | None:
@@ -21,7 +22,7 @@ def parse_source_timestamp(value: Any) -> datetime | None:
 
 
 @dataclass(frozen=True, slots=True)
-class OrderDeliveryMetric:
+class _LegacyOrderDeliveryMetric:
     """One order-level classification independent of item and review joins."""
 
     order_id: str
@@ -33,7 +34,7 @@ class OrderDeliveryMetric:
     exclusion_reason: str | None
 
 
-def classify_order(order: Mapping[str, Any]) -> OrderDeliveryMetric:
+def _legacy_classify_order(order: Mapping[str, Any]) -> _LegacyOrderDeliveryMetric:
     """Apply the documented calendar-date and duration rules to one order."""
 
     order_id = str(order.get("order_id") or "")
@@ -72,7 +73,7 @@ def classify_order(order: Mapping[str, Any]) -> OrderDeliveryMetric:
         duration_hours = (actual - purchase).total_seconds() / 3600.0
 
     exclusion_reason = eligibility_reason or duration_reason
-    return OrderDeliveryMetric(
+    return _LegacyOrderDeliveryMetric(
         order_id=order_id,
         is_delivery_eligible=is_delivery_eligible,
         is_late=is_late,
@@ -100,7 +101,7 @@ def percentile_cont(values: Sequence[float], percentile: float) -> float | None:
     return float(ordered[lower] + (ordered[upper] - ordered[lower]) * weight)
 
 
-def aggregate_delivery_metrics(orders: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
+def _legacy_aggregate_delivery_metrics(orders: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
     """Aggregate order-level KPIs with explicit numerators and denominators."""
 
     classified = tuple(classify_order(order) for order in orders)
@@ -182,10 +183,280 @@ def distinct_order_sellers(items: Iterable[Mapping[str, Any]]) -> set[tuple[str,
 
 
 def distinct_order_categories(items: Iterable[Mapping[str, Any]]) -> set[tuple[str, str]]:
-    """Build one row per order/category while excluding absent categories."""
+    """Build one row per order/category, retaining absent categories as a label."""
 
+    missing_category = "(Missing category)"
     return {
-        (str(item.get("order_id") or ""), str(item.get("product_category_name") or ""))
+        (
+            str(item.get("order_id") or ""),
+            str(item.get("product_category_name") or "").strip() or missing_category,
+        )
         for item in items
-        if item.get("order_id") and item.get("product_category_name")
+        if item.get("order_id")
+    }
+
+
+@dataclass(frozen=True, slots=True)
+class OrderDeliveryMetric:
+    """One order-level delivery outcome with independent eligibility cohorts."""
+
+    order_id: str
+    delivery_classification: str
+    delivery_eligible: bool
+    days_early_or_late: int | None
+    duration_eligible: bool
+    delivery_duration_days: float | None
+    duration_exclusion_reason: str | None
+    delivery_exclusion_reason: str | None
+
+    @property
+    def is_delivery_eligible(self) -> bool:
+        """SQL-aligned name for the delivery-status cohort."""
+
+        return self.delivery_eligible
+
+    @property
+    def is_late(self) -> bool | None:
+        """SQL-aligned lateness flag, undefined for excluded orders."""
+
+        if not self.delivery_eligible:
+            return None
+        return self.delivery_classification == "Late"
+
+    @property
+    def is_duration_eligible(self) -> bool:
+        return self.duration_eligible
+
+    @property
+    def delivery_duration_hours(self) -> float | None:
+        if self.delivery_duration_days is None:
+            return None
+        return self.delivery_duration_days * 24
+
+    @property
+    def days_late(self) -> int | None:
+        if self.days_early_or_late is None or self.days_early_or_late <= 0:
+            return None
+        return self.days_early_or_late
+
+    @property
+    def exclusion_reason(self) -> str | None:
+        return self.delivery_exclusion_reason or self.duration_exclusion_reason
+
+
+def classify_order(order: Mapping[str, Any]) -> OrderDeliveryMetric:
+    """Apply the SQL contract to one order without conflating KPI cohorts."""
+
+    order_id = str(order.get("order_id") or "")
+    status = str(order.get("order_status") or "").strip().lower()
+    purchase = parse_source_timestamp(order.get("order_purchase_timestamp"))
+    actual = parse_source_timestamp(order.get("order_delivered_customer_date"))
+    estimated = parse_source_timestamp(order.get("order_estimated_delivery_date"))
+
+    if status != "delivered":
+        delivery_reason = "status_not_delivered"
+    elif actual is None:
+        delivery_reason = "missing_or_invalid_actual_delivery"
+    elif estimated is None:
+        delivery_reason = "missing_or_invalid_estimated_delivery"
+    else:
+        delivery_reason = None
+
+    delivery_eligible = delivery_reason is None
+    days_early_or_late = (actual.date() - estimated.date()).days if delivery_eligible else None
+    classification = (
+        "Excluded"
+        if not delivery_eligible
+        else "Late"
+        if days_early_or_late is not None and days_early_or_late > 0
+        else "On Time"
+    )
+
+    if purchase is None:
+        duration_reason = "missing_or_invalid_purchase_timestamp"
+    elif actual is None:
+        duration_reason = "missing_or_invalid_actual_delivery"
+    elif actual < purchase:
+        duration_reason = "negative_delivery_interval"
+    else:
+        duration_reason = None
+    duration_eligible = duration_reason is None
+    duration_days = (
+        (actual - purchase).total_seconds() / 86_400
+        if duration_eligible and actual is not None and purchase is not None
+        else None
+    )
+    return OrderDeliveryMetric(
+        order_id=order_id,
+        delivery_classification=classification,
+        delivery_eligible=delivery_eligible,
+        days_early_or_late=days_early_or_late,
+        duration_eligible=duration_eligible,
+        delivery_duration_days=duration_days,
+        duration_exclusion_reason=duration_reason,
+        delivery_exclusion_reason=delivery_reason,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class DeliveryKpis:
+    """Aggregated delivery KPIs with explicit denominators."""
+
+    all_orders: int
+    delivery_eligible_orders: int
+    on_time_orders: int
+    late_orders: int
+    on_time_rate: float | None
+    late_rate: float | None
+    duration_eligible_orders: int
+    average_delivery_days: float | None
+    median_delivery_days: float | None
+    p90_delivery_days: float | None
+    p95_delivery_days: float | None
+    average_days_late: float | None
+
+    @property
+    def source_order_count(self) -> int:
+        return self.all_orders
+
+    @property
+    def eligible_order_count(self) -> int:
+        return self.delivery_eligible_orders
+
+    @property
+    def on_time_order_count(self) -> int:
+        return self.on_time_orders
+
+    @property
+    def late_order_count(self) -> int:
+        return self.late_orders
+
+    @property
+    def duration_eligible_order_count(self) -> int:
+        return self.duration_eligible_orders
+
+    @property
+    def average_delivery_hours(self) -> float | None:
+        return self.average_delivery_days * 24 if self.average_delivery_days is not None else None
+
+    @property
+    def median_delivery_hours(self) -> float | None:
+        return self.median_delivery_days * 24 if self.median_delivery_days is not None else None
+
+    @property
+    def p90_delivery_hours(self) -> float | None:
+        return self.p90_delivery_days * 24 if self.p90_delivery_days is not None else None
+
+    @property
+    def p95_delivery_hours(self) -> float | None:
+        return self.p95_delivery_days * 24 if self.p95_delivery_days is not None else None
+
+
+def aggregate_delivery_kpis(
+    outcomes: Iterable[OrderDeliveryMetric | Mapping[str, Any]],
+) -> DeliveryKpis:
+    """Aggregate outcomes while keeping delivery and duration denominators separate."""
+
+    materialized = tuple(
+        item if isinstance(item, OrderDeliveryMetric) else classify_order(item) for item in outcomes
+    )
+    eligible = tuple(item for item in materialized if item.delivery_eligible)
+    on_time = tuple(item for item in eligible if item.delivery_classification == "On Time")
+    late = tuple(item for item in eligible if item.delivery_classification == "Late")
+    durations = [
+        item.delivery_duration_days
+        for item in materialized
+        if item.delivery_duration_days is not None
+    ]
+    late_days = [
+        float(item.days_early_or_late) for item in late if item.days_early_or_late is not None
+    ]
+    denominator = len(eligible)
+    return DeliveryKpis(
+        all_orders=len(materialized),
+        delivery_eligible_orders=denominator,
+        on_time_orders=len(on_time),
+        late_orders=len(late),
+        on_time_rate=len(on_time) / denominator if denominator else None,
+        late_rate=len(late) / denominator if denominator else None,
+        duration_eligible_orders=len(durations),
+        average_delivery_days=fmean(durations) if durations else None,
+        median_delivery_days=median(durations) if durations else None,
+        p90_delivery_days=percentile_cont(durations, 0.90),
+        p95_delivery_days=percentile_cont(durations, 0.95),
+        average_days_late=fmean(late_days) if late_days else None,
+    )
+
+
+def aggregate_delivery_metrics(
+    orders: Iterable[Mapping[str, Any] | OrderDeliveryMetric],
+) -> dict[str, Any]:
+    """Return the SQL-facing mapping used by the reconciliation CLI."""
+
+    materialized = tuple(orders)
+    outcomes = tuple(
+        item if isinstance(item, OrderDeliveryMetric) else classify_order(item)
+        for item in materialized
+    )
+    metrics = aggregate_delivery_kpis(outcomes)
+    return {
+        "source_order_count": metrics.all_orders,
+        "eligible_order_count": metrics.delivery_eligible_orders,
+        "on_time_order_count": metrics.on_time_orders,
+        "late_order_count": metrics.late_orders,
+        "on_time_delivery_rate": metrics.on_time_rate,
+        "late_delivery_rate": metrics.late_rate,
+        "duration_eligible_order_count": metrics.duration_eligible_orders,
+        "average_delivery_hours": (
+            metrics.average_delivery_days * 24
+            if metrics.average_delivery_days is not None
+            else None
+        ),
+        "median_delivery_hours": (
+            metrics.median_delivery_days * 24 if metrics.median_delivery_days is not None else None
+        ),
+        "p90_delivery_hours": (
+            metrics.p90_delivery_days * 24 if metrics.p90_delivery_days is not None else None
+        ),
+        "p95_delivery_hours": (
+            metrics.p95_delivery_days * 24 if metrics.p95_delivery_days is not None else None
+        ),
+        "average_days_late": metrics.average_days_late,
+    }
+
+
+def select_review_for_order(
+    reviews: Iterable[Mapping[str, Any]],
+) -> Mapping[str, Any] | None:
+    """Select one usable review using the documented deterministic ordering."""
+
+    return select_review(reviews)
+
+
+def build_order_seller_bridge(
+    items: Iterable[Mapping[str, Any]],
+) -> set[tuple[str, str]]:
+    """Build the distinct order/seller attribution bridge."""
+
+    return distinct_order_sellers(items)
+
+
+def build_order_category_bridge(
+    items: Iterable[Mapping[str, Any]],
+    products: Iterable[Mapping[str, Any]],
+) -> set[tuple[str, str]]:
+    """Build the distinct order/category attribution bridge."""
+
+    missing_category = "(Missing category)"
+    categories = {
+        str(product.get("product_id")): (
+            str(product.get("product_category_name") or "").strip() or missing_category
+        )
+        for product in products
+        if product.get("product_id")
+    }
+    return {
+        (str(item["order_id"]), category)
+        for item in items
+        if item.get("order_id") and (category := categories.get(str(item.get("product_id")), ""))
     }

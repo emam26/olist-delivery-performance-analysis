@@ -5,13 +5,13 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 from olist_delivery.database import database_connection, safe_database_error
 from olist_delivery.datasets import DATASETS_BY_NAME
 from olist_delivery.metrics import aggregate_delivery_metrics
 from olist_delivery.validation import reconcile_metric_values
-
 
 RECONCILIATION_KEYS = (
     "source_order_count",
@@ -31,8 +31,18 @@ RECONCILIATION_KEYS = (
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--orders-csv", type=Path, required=True)
-    parser.add_argument("--output", type=Path, default=Path("reports/metric_validation.json"))
+    parser.add_argument(
+        "--orders-csv",
+        type=Path,
+        default=Path("data/raw/olist_orders_dataset.csv"),
+    )
+    parser.add_argument(
+        "--json-output",
+        "--output",
+        type=Path,
+        dest="output",
+        default=Path("reports/metric_validation.json"),
+    )
     parser.add_argument("--sqlserver", action="store_true")
     return parser
 
@@ -69,14 +79,17 @@ def main() -> int:
                 sql_metrics = _sql_metrics(connection)
             findings = reconcile_metric_values(python_metrics, sql_metrics, tolerance=1e-4)
             report["sql_metrics"] = sql_metrics
-            report["reconciliation"] = [finding.__dict__ for finding in findings]
-            failed = any(finding.status == "failed" for finding in findings)
+            report["reconciliation"] = [asdict(finding) for finding in findings]
+            failed = any(finding.status.lower() == "failed" for finding in findings)
         else:
             report["sql_reconciliation"] = "NOT RUN"
         if args.output.exists():
             raise FileExistsError(f"metric report already exists: {args.output}")
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        args.output.write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
     except Exception as exc:
         print(f"Metric validation failed: {safe_database_error(exc)}")
         return 1
