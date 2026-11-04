@@ -7,7 +7,6 @@ import pytest
 from olist_delivery.config import load_settings
 from olist_delivery.database import database_connection
 
-
 pytestmark = [
     pytest.mark.sqlserver,
     pytest.mark.skipif(

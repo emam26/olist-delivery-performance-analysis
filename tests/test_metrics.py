@@ -17,6 +17,7 @@ from olist_delivery.metrics import (
 def _order(**overrides: str | None) -> dict[str, str | None]:
     order: dict[str, str | None] = {
         "order_id": "order-1",
+        "order_status": "delivered",
         "order_purchase_timestamp": "2018-01-01 09:00:00",
         "order_delivered_customer_date": "2018-01-10 17:00:00",
         "order_estimated_delivery_date": "2018-01-10 00:00:00",
@@ -36,9 +37,7 @@ def test_delivery_on_estimated_calendar_date_is_on_time() -> None:
 
 
 def test_delivery_after_estimated_calendar_date_is_late() -> None:
-    outcome = classify_order(
-        _order(order_delivered_customer_date="2018-01-11 00:00:01")
-    )
+    outcome = classify_order(_order(order_delivered_customer_date="2018-01-11 00:00:01"))
 
     assert outcome.delivery_classification == "Late"
     assert outcome.days_early_or_late == 1
@@ -54,9 +53,7 @@ def test_missing_estimate_excludes_status_but_not_valid_duration() -> None:
 
 
 def test_negative_duration_is_not_replaced_with_zero() -> None:
-    outcome = classify_order(
-        _order(order_purchase_timestamp="2018-01-12 09:00:00")
-    )
+    outcome = classify_order(_order(order_purchase_timestamp="2018-01-12 09:00:00"))
 
     assert outcome.duration_eligible is False
     assert outcome.delivery_duration_days is None
@@ -141,11 +138,20 @@ def test_bridges_deduplicate_order_group_pairs() -> None:
             "seller_id": "seller-1",
             "product_id": "product-2",
         },
+        {
+            "order_id": "order-1",
+            "seller_id": "seller-1",
+            "product_id": "product-3",
+        },
     ]
     products = [
         {"product_id": "product-1", "product_category_name": "books"},
         {"product_id": "product-2", "product_category_name": "books"},
+        {"product_id": "product-3", "product_category_name": ""},
     ]
 
     assert build_order_seller_bridge(items) == {("order-1", "seller-1")}
-    assert build_order_category_bridge(items, products) == {("order-1", "books")}
+    assert build_order_category_bridge(items, products) == {
+        ("order-1", "books"),
+        ("order-1", "(Missing category)"),
+    }

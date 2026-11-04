@@ -115,9 +115,7 @@ def test_inventory_detects_duplicate_natural_key(tmp_path: Path) -> None:
     _write_sources(raw_directory, rows)
 
     payload = build_inventory(raw_directory).to_dict()
-    orders = next(
-        item for item in payload["files"] if item["dataset"] == "orders"
-    )
+    orders = next(item for item in payload["files"] if item["dataset"] == "orders")
 
     assert orders["duplicate_natural_key_count"] == 1
     assert payload["status"] != "passed"
@@ -133,8 +131,7 @@ def test_inventory_detects_cross_file_orphan(tmp_path: Path) -> None:
 
     assert payload["status"] != "passed"
     assert any(
-        check["check_id"] == "order_items_product_orphans"
-        and check["observed_count"] == 1
+        check["check_id"] == "order_items_product_orphans" and check["observed_count"] == 1
         for check in payload["relationships"]
     )
 
@@ -147,9 +144,7 @@ def test_inventory_detects_malformed_csv_record(tmp_path: Path) -> None:
         handle.write("too,few,columns\n")
 
     payload = build_inventory(raw_directory).to_dict()
-    orders = next(
-        item for item in payload["files"] if item["dataset"] == "orders"
-    )
+    orders = next(item for item in payload["files"] if item["dataset"] == "orders")
 
     assert orders["malformed_record_count"] == 1
     assert payload["status"] != "passed"
@@ -162,9 +157,7 @@ def test_inventory_detects_negative_delivery_interval(tmp_path: Path) -> None:
     _write_sources(raw_directory, rows)
 
     payload = build_inventory(raw_directory).to_dict()
-    orders = next(
-        item for item in payload["files"] if item["dataset"] == "orders"
-    )
+    orders = next(item for item in payload["files"] if item["dataset"] == "orders")
 
     assert orders["negative_delivery_interval_count"] == 1
     assert payload["status"] != "passed"
@@ -176,9 +169,7 @@ def test_inventory_reports_missing_required_file(tmp_path: Path) -> None:
     (raw_directory / _spec("reviews").filename).unlink()
 
     payload = build_inventory(raw_directory).to_dict()
-    reviews = next(
-        item for item in payload["files"] if item["dataset"] == "reviews"
-    )
+    reviews = next(item for item in payload["files"] if item["dataset"] == "reviews")
 
     assert payload["status"] == "failed"
     assert reviews["exists"] is False
