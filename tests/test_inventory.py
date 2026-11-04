@@ -118,6 +118,7 @@ def test_inventory_detects_duplicate_natural_key(tmp_path: Path) -> None:
     orders = next(item for item in payload["files"] if item["dataset"] == "orders")
 
     assert orders["duplicate_natural_key_count"] == 1
+    assert orders["loadable"] is True
     assert payload["status"] != "passed"
 
 
@@ -136,6 +137,32 @@ def test_inventory_detects_cross_file_orphan(tmp_path: Path) -> None:
     )
 
 
+def test_inventory_profiles_multi_seller_and_category_attribution(tmp_path: Path) -> None:
+    rows = _base_rows()
+    rows["sellers"].append(
+        {
+            "seller_id": "seller-2",
+            "seller_zip_code_prefix": "03000",
+            "seller_city": "rio de janeiro",
+            "seller_state": "RJ",
+        }
+    )
+    second_product = dict(rows["products"][0])
+    second_product.update(product_id="product-2", product_category_name="toys")
+    rows["products"].append(second_product)
+    second_item = dict(rows["order_items"][0])
+    second_item.update(order_item_id="2", product_id="product-2", seller_id="seller-2")
+    rows["order_items"].append(second_item)
+    raw_directory = tmp_path / "raw"
+    _write_sources(raw_directory, rows)
+
+    payload = build_inventory(raw_directory).to_dict()
+    counts = {check["check_id"]: check["observed_count"] for check in payload["relationships"]}
+
+    assert counts["multi_seller_orders"] == 1
+    assert counts["multi_category_orders"] == 1
+
+
 def test_inventory_detects_malformed_csv_record(tmp_path: Path) -> None:
     raw_directory = tmp_path / "raw"
     _write_sources(raw_directory, _base_rows())
@@ -147,6 +174,7 @@ def test_inventory_detects_malformed_csv_record(tmp_path: Path) -> None:
     orders = next(item for item in payload["files"] if item["dataset"] == "orders")
 
     assert orders["malformed_record_count"] == 1
+    assert orders["loadable"] is False
     assert payload["status"] != "passed"
 
 
@@ -161,6 +189,21 @@ def test_inventory_detects_negative_delivery_interval(tmp_path: Path) -> None:
 
     assert orders["negative_delivery_interval_count"] == 1
     assert payload["status"] != "passed"
+
+
+def test_inventory_rejects_blank_required_identifier(tmp_path: Path) -> None:
+    rows = _base_rows()
+    rows["order_items"][0]["seller_id"] = "   "
+    raw_directory = tmp_path / "raw"
+    _write_sources(raw_directory, rows)
+
+    payload = build_inventory(raw_directory).to_dict()
+    items = next(item for item in payload["files"] if item["dataset"] == "order_items")
+
+    assert items["blank_identifier_count"] == 1
+    assert items["blank_identifier_counts"]["seller_id"] == 1
+    assert items["loadable"] is True
+    assert items["status"] == "failed"
 
 
 def test_inventory_reports_missing_required_file(tmp_path: Path) -> None:

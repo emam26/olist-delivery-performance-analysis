@@ -11,6 +11,7 @@ from olist_delivery.data_quality import (
     write_validation_json,
     write_validation_markdown,
 )
+from olist_delivery.validation import reconcile_metric_values
 
 
 def _finding(*, severity: str = "Critical", status: str = "Passed") -> ValidationFinding:
@@ -53,3 +54,13 @@ def test_validation_artifacts_are_created_without_overwrite(tmp_path: Path) -> N
 
     with pytest.raises(FileExistsError):
         write_validation_json(findings, json_path, run_id=7)
+
+
+def test_metric_reconciliation_uses_absolute_tolerance_only() -> None:
+    findings = reconcile_metric_values(
+        {"large_metric": 1_000_000_000_000.0},
+        {"large_metric": 1_000_000_000_001.0},
+        tolerance=1e-4,
+    )
+
+    assert findings[0].status == "Failed"

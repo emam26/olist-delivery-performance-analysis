@@ -13,6 +13,7 @@ BEGIN
     SET XACT_ABORT ON;
 
     DECLARE @run_id bigint;
+    DECLARE @current_snapshot_id bigint;
     DECLARE @results TABLE
     (
         check_id nvarchar(200) NOT NULL PRIMARY KEY,
@@ -25,34 +26,62 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        INSERT audit.validation_runs (status, fail_on_warning)
-        VALUES ('Started', @fail_on_warning);
+        SELECT @current_snapshot_id = MAX(dataset_snapshot_id)
+        FROM audit.dataset_snapshots AS s WITH (UPDLOCK, HOLDLOCK)
+        WHERE s.status = 'Succeeded'
+          AND s.dataset_count = 6
+          AND (SELECT COUNT_BIG(*)
+               FROM audit.dataset_snapshot_batches AS m
+               INNER JOIN audit.load_batches AS b
+                   ON b.load_batch_id = m.load_batch_id
+                  AND b.dataset_name = m.dataset_name
+                  AND b.source_sha256 = m.source_sha256
+                  AND b.status = 'Succeeded'
+               WHERE m.dataset_snapshot_id = s.dataset_snapshot_id) = 6;
+
+        INSERT audit.validation_runs (dataset_snapshot_id, status, fail_on_warning)
+        VALUES (@current_snapshot_id, 'Started', @fail_on_warning);
         SET @run_id = CONVERT(bigint, SCOPE_IDENTITY());
 
-        DECLARE @latest_successful_batches bigint =
+        DECLARE @current_snapshot_batches bigint =
         (
             SELECT COUNT_BIG(*)
-            FROM
-            (
-                SELECT dataset_name, MAX(load_batch_id) AS load_batch_id
-                FROM audit.load_batches
-                WHERE status = 'Succeeded'
-                GROUP BY dataset_name
-            ) AS batches
+            FROM analytics.vw_current_snapshot_batches
         );
         INSERT @results VALUES
         (
-            N'load.required_successful_batches',
-            CASE WHEN @latest_successful_batches = 6 THEN 'Passed' ELSE 'Failed' END,
-            CONVERT(nvarchar(1000), @latest_successful_batches), N'6',
-            N'Each required dataset needs a successful current load.'
+            N'load.complete_current_snapshot',
+            CASE WHEN @current_snapshot_id IS NOT NULL AND @current_snapshot_batches = 6
+                 THEN 'Passed' ELSE 'Failed' END,
+            CONCAT(N'snapshot=', @current_snapshot_id,
+                   N'; mapped_datasets=', @current_snapshot_batches),
+            N'one successful snapshot with 6 mapped datasets',
+            N'Analytical views activate all six source versions together.'
+        );
+
+        DECLARE @snapshot_mapping_mismatches bigint =
+        (
+            SELECT COUNT_BIG(*)
+            FROM audit.dataset_snapshot_batches AS m
+            LEFT JOIN audit.load_batches AS b ON b.load_batch_id = m.load_batch_id
+            WHERE m.dataset_snapshot_id = @current_snapshot_id
+              AND (b.load_batch_id IS NULL OR b.status <> 'Succeeded'
+                   OR b.dataset_name <> m.dataset_name
+                   OR b.source_sha256 <> m.source_sha256)
+        );
+        INSERT @results VALUES
+        (
+            N'load.snapshot_batch_identity',
+            CASE WHEN @snapshot_mapping_mismatches = 0 THEN 'Passed' ELSE 'Failed' END,
+            CONVERT(nvarchar(1000), @snapshot_mapping_mismatches), N'0 mismatches',
+            N'Every current snapshot mapping must match a successful batch name and hash.'
         );
 
         DECLARE @batch_count_mismatches bigint =
         (
-            SELECT COUNT_BIG(*) FROM audit.load_batches
-            WHERE status = 'Succeeded'
-              AND expected_row_count IS NOT NULL
+            SELECT COUNT_BIG(*)
+            FROM analytics.vw_current_snapshot_batches
+            WHERE expected_row_count IS NOT NULL
               AND expected_row_count <> inserted_row_count
         );
         INSERT @results VALUES
@@ -64,12 +93,7 @@ BEGIN
         );
 
         DECLARE @staging_count_mismatches bigint;
-        WITH latest AS
-        (
-            SELECT dataset_name, MAX(load_batch_id) AS load_batch_id
-            FROM audit.load_batches WHERE status = 'Succeeded' GROUP BY dataset_name
-        ),
-        staged AS
+        WITH staged AS
         (
             SELECT N'orders' AS dataset_name, load_batch_id, COUNT_BIG(*) AS rows_loaded
             FROM stg.orders GROUP BY load_batch_id
@@ -90,9 +114,10 @@ BEGIN
             GROUP BY load_batch_id
         )
         SELECT @staging_count_mismatches = COUNT_BIG(*)
-        FROM latest AS l
-        INNER JOIN audit.load_batches AS b ON b.load_batch_id = l.load_batch_id
-        LEFT JOIN staged AS s ON s.load_batch_id = l.load_batch_id
+        FROM analytics.vw_current_snapshot_batches AS current_batch
+        INNER JOIN audit.load_batches AS b
+            ON b.load_batch_id = current_batch.load_batch_id
+        LEFT JOIN staged AS s ON s.load_batch_id = current_batch.load_batch_id
         WHERE ISNULL(s.rows_loaded, -1) <> b.inserted_row_count;
         INSERT @results VALUES
         (
@@ -132,6 +157,97 @@ BEGIN
             CASE WHEN @duplicate_items = 0 THEN 'Passed' ELSE 'Failed' END,
             CONVERT(nvarchar(1000), @duplicate_items), N'0 duplicate order-item keys',
             N'Order-item grain is (order_id, order_item_id).'
+        );
+
+        DECLARE @duplicate_customers bigint =
+        (
+            SELECT COUNT_BIG(*) FROM
+            (
+                SELECT customer_id FROM analytics.vw_current_customers_raw
+                GROUP BY customer_id HAVING COUNT_BIG(*) > 1
+            ) AS duplicates
+        );
+        INSERT @results VALUES
+        (
+            N'grain.customers_unique',
+            CASE WHEN @duplicate_customers = 0 THEN 'Passed' ELSE 'Failed' END,
+            CONVERT(nvarchar(1000), @duplicate_customers), N'0 duplicate customer IDs',
+            N'Customer grain is one source row per customer_id.'
+        );
+
+        DECLARE @duplicate_sellers bigint =
+        (
+            SELECT COUNT_BIG(*) FROM
+            (
+                SELECT seller_id FROM analytics.vw_current_sellers_raw
+                GROUP BY seller_id HAVING COUNT_BIG(*) > 1
+            ) AS duplicates
+        );
+        INSERT @results VALUES
+        (
+            N'grain.sellers_unique',
+            CASE WHEN @duplicate_sellers = 0 THEN 'Passed' ELSE 'Failed' END,
+            CONVERT(nvarchar(1000), @duplicate_sellers), N'0 duplicate seller IDs',
+            N'Seller grain is one source row per seller_id.'
+        );
+
+        DECLARE @duplicate_products bigint =
+        (
+            SELECT COUNT_BIG(*) FROM
+            (
+                SELECT product_id FROM analytics.vw_current_products_raw
+                GROUP BY product_id HAVING COUNT_BIG(*) > 1
+            ) AS duplicates
+        );
+        INSERT @results VALUES
+        (
+            N'grain.products_unique',
+            CASE WHEN @duplicate_products = 0 THEN 'Passed' ELSE 'Failed' END,
+            CONVERT(nvarchar(1000), @duplicate_products), N'0 duplicate product IDs',
+            N'Product grain is one source row per product_id.'
+        );
+
+        DECLARE @duplicate_reviews bigint =
+        (
+            SELECT COUNT_BIG(*) FROM
+            (
+                SELECT review_id, order_id FROM analytics.vw_current_reviews_raw
+                GROUP BY review_id, order_id HAVING COUNT_BIG(*) > 1
+            ) AS duplicates
+        );
+        INSERT @results VALUES
+        (
+            N'grain.reviews_unique',
+            CASE WHEN @duplicate_reviews = 0 THEN 'Passed' ELSE 'Failed' END,
+            CONVERT(nvarchar(1000), @duplicate_reviews),
+            N'0 duplicate review/order keys',
+            N'Review source grain is the composite (review_id, order_id).'
+        );
+
+        DECLARE @blank_required_identifiers bigint =
+            (SELECT COUNT_BIG(*) FROM analytics.vw_current_orders_raw
+             WHERE NULLIF(LTRIM(RTRIM(order_id)), N'') IS NULL
+                OR NULLIF(LTRIM(RTRIM(customer_id)), N'') IS NULL)
+          + (SELECT COUNT_BIG(*) FROM analytics.vw_current_items_raw
+             WHERE NULLIF(LTRIM(RTRIM(order_id)), N'') IS NULL
+                OR NULLIF(LTRIM(RTRIM(order_item_id)), N'') IS NULL
+                OR NULLIF(LTRIM(RTRIM(product_id)), N'') IS NULL
+                OR NULLIF(LTRIM(RTRIM(seller_id)), N'') IS NULL)
+          + (SELECT COUNT_BIG(*) FROM analytics.vw_current_customers_raw
+             WHERE NULLIF(LTRIM(RTRIM(customer_id)), N'') IS NULL)
+          + (SELECT COUNT_BIG(*) FROM analytics.vw_current_sellers_raw
+             WHERE NULLIF(LTRIM(RTRIM(seller_id)), N'') IS NULL)
+          + (SELECT COUNT_BIG(*) FROM analytics.vw_current_products_raw
+             WHERE NULLIF(LTRIM(RTRIM(product_id)), N'') IS NULL)
+          + (SELECT COUNT_BIG(*) FROM analytics.vw_current_reviews_raw
+             WHERE NULLIF(LTRIM(RTRIM(review_id)), N'') IS NULL
+                OR NULLIF(LTRIM(RTRIM(order_id)), N'') IS NULL);
+        INSERT @results VALUES
+        (
+            N'quality.required_identifiers_not_blank',
+            CASE WHEN @blank_required_identifiers = 0 THEN 'Passed' ELSE 'Failed' END,
+            CONVERT(nvarchar(1000), @blank_required_identifiers), N'0 rows',
+            N'Required identifiers must be nonblank before canonical joins.'
         );
 
         DECLARE @orders_missing_customers bigint =
@@ -220,10 +336,77 @@ BEGIN
             N'TRY_CONVERT failures are excluded, never converted to zero dates.'
         );
 
+        DECLARE @invalid_purchase_timestamps bigint =
+        (
+            SELECT COUNT_BIG(*) FROM analytics.vw_orders_typed
+            WHERE NULLIF(order_purchase_timestamp_raw, N'') IS NOT NULL
+              AND order_purchase_timestamp IS NULL
+        );
+        INSERT @results VALUES
+        (
+            N'quality.purchase_timestamps_parse',
+            CASE WHEN @invalid_purchase_timestamps = 0 THEN 'Passed' ELSE 'Failed' END,
+            CONVERT(nvarchar(1000), @invalid_purchase_timestamps),
+            N'0 invalid non-empty timestamps',
+            N'Invalid purchase timestamps remain NULL and are excluded from duration metrics.'
+        );
+
+        DECLARE @missing_delivery_observations bigint =
+        (
+            SELECT COUNT_BIG(*) FROM analytics.vw_order_delivery
+            WHERE is_delivery_eligible = 0
+        );
+        INSERT @results VALUES
+        (
+            N'quality.delivery_status_exclusions', 'Passed',
+            CONVERT(nvarchar(1000), @missing_delivery_observations), N'profiled count',
+            N'Non-delivered or missing delivery observations remain explicit exclusions.'
+        );
+
+        DECLARE @missing_purchase_timestamps bigint =
+            (SELECT COUNT_BIG(*) FROM analytics.vw_orders_typed
+             WHERE NULLIF(order_purchase_timestamp_raw, N'') IS NULL);
+        DECLARE @missing_actual_delivery_timestamps bigint =
+            (SELECT COUNT_BIG(*) FROM analytics.vw_orders_typed
+             WHERE NULLIF(order_delivered_customer_timestamp_raw, N'') IS NULL);
+        DECLARE @missing_estimated_delivery_timestamps bigint =
+            (SELECT COUNT_BIG(*) FROM analytics.vw_orders_typed
+             WHERE NULLIF(order_estimated_delivery_timestamp_raw, N'') IS NULL);
+        INSERT @results VALUES
+        (
+            N'missingness.purchase_timestamp', 'Passed',
+            CONVERT(nvarchar(1000), @missing_purchase_timestamps), N'profiled count',
+            N'Missing purchase timestamps remain NULL and affect duration/month cohorts.'
+        );
+        INSERT @results VALUES
+        (
+            N'missingness.actual_delivery_timestamp', 'Passed',
+            CONVERT(nvarchar(1000), @missing_actual_delivery_timestamps), N'profiled count',
+            N'Missing actual delivery timestamps remain NULL and affect both cohorts.'
+        );
+        INSERT @results VALUES
+        (
+            N'missingness.estimated_delivery_timestamp', 'Passed',
+            CONVERT(nvarchar(1000), @missing_estimated_delivery_timestamps),
+            N'profiled count',
+            N'Missing estimated timestamps remain NULL and affect delivery status only.'
+        );
+
+        DECLARE @missing_product_categories bigint =
+            (SELECT COUNT_BIG(*) FROM analytics.vw_products_canonical
+             WHERE product_category_name IS NULL);
+        INSERT @results VALUES
+        (
+            N'missingness.product_category',
+            CASE WHEN @missing_product_categories = 0 THEN 'Passed' ELSE 'Warning' END,
+            CONVERT(nvarchar(1000), @missing_product_categories), N'0 preferred',
+            N'Missing categories are retained under the explicit missing-category label.'
+        );
+
         DECLARE @negative_intervals bigint =
         (
             SELECT COUNT_BIG(*) FROM analytics.vw_order_delivery
-            WHERE exclusion_reason = N'negative_delivery_interval'
+            WHERE duration_exclusion_reason = N'negative_delivery_interval'
         );
         INSERT @results VALUES
         (
@@ -263,6 +446,49 @@ BEGIN
             CASE WHEN @orders_multiple_reviews = 0 THEN 'Passed' ELSE 'Warning' END,
             CONVERT(nvarchar(1000), @orders_multiple_reviews), N'documented, not assumed zero',
             N'All reviews remain inspectable; reporting selects one deterministically.'
+        );
+
+        DECLARE @missing_review_scores bigint =
+        (
+            SELECT COUNT_BIG(*) FROM analytics.vw_reviews_all
+            WHERE review_score IS NULL OR review_score NOT BETWEEN 1 AND 5
+        );
+        INSERT @results VALUES
+        (
+            N'quality.missing_or_invalid_review_scores',
+            CASE WHEN @missing_review_scores = 0 THEN 'Passed' ELSE 'Warning' END,
+            CONVERT(nvarchar(1000), @missing_review_scores), N'0 preferred',
+            N'Invalid or missing scores remain unreviewed and are not imputed.'
+        );
+
+        DECLARE @multi_seller_orders bigint =
+        (
+            SELECT COUNT_BIG(*) FROM
+            (
+                SELECT order_id FROM analytics.vw_order_seller_bridge
+                GROUP BY order_id HAVING COUNT_BIG(*) > 1
+            ) AS multi_seller
+        );
+        INSERT @results VALUES
+        (
+            N'attribution.multi_seller_orders', 'Passed',
+            CONVERT(nvarchar(1000), @multi_seller_orders), N'profiled count',
+            N'Multi-seller orders are attributed once to each distinct seller and are non-additive.'
+        );
+
+        DECLARE @multi_category_orders bigint =
+        (
+            SELECT COUNT_BIG(*) FROM
+            (
+                SELECT order_id FROM analytics.vw_order_category_bridge
+                GROUP BY order_id HAVING COUNT_BIG(*) > 1
+            ) AS multi_category
+        );
+        INSERT @results VALUES
+        (
+            N'attribution.multi_category_orders', 'Passed',
+            CONVERT(nvarchar(1000), @multi_category_orders), N'profiled count',
+            N'Multi-category orders are attributed once to each category and are non-additive.'
         );
 
         DECLARE @order_delivery_duplicates bigint =
@@ -360,6 +586,20 @@ BEGIN
             N'Reporting totals must retain order-level grain.'
         );
 
+        DECLARE @raw_order_count bigint =
+            (SELECT COUNT_BIG(*) FROM analytics.vw_current_orders_raw);
+        DECLARE @canonical_order_count bigint =
+            (SELECT COUNT_BIG(*) FROM analytics.vw_orders_typed);
+        INSERT @results VALUES
+        (
+            N'reconciliation.staging_to_canonical_orders',
+            CASE WHEN @raw_order_count = @canonical_order_count
+                 THEN 'Passed' ELSE 'Failed' END,
+            CONCAT(N'raw=', @raw_order_count, N'; canonical=', @canonical_order_count),
+            N'equal when source order IDs are unique',
+            N'Canonical selection must not hide order-count multiplication or loss.'
+        );
+
         INSERT audit.validation_results
         (
             validation_run_id, check_id, status, observed_value, expected_value, message
@@ -383,7 +623,8 @@ BEGIN
 
         COMMIT TRANSACTION;
 
-        SELECT check_id, status, observed_value, expected_value, message
+        SELECT validation_run_id, check_id, status,
+               observed_value, expected_value, message
         FROM audit.validation_results
         WHERE validation_run_id = @run_id
         ORDER BY check_id;
@@ -392,11 +633,12 @@ BEGIN
         IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
         INSERT audit.validation_runs
         (
-            status, fail_on_warning, completed_at_utc, error_summary
+            dataset_snapshot_id, status, fail_on_warning,
+            completed_at_utc, error_summary
         )
         VALUES
         (
-            'Failed', @fail_on_warning, SYSUTCDATETIME(),
+            @current_snapshot_id, 'Failed', @fail_on_warning, SYSUTCDATETIME(),
             LEFT(CONCAT(ERROR_NUMBER(), N': ', ERROR_MESSAGE()), 4000)
         );
         THROW;

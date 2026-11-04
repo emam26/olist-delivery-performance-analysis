@@ -9,6 +9,11 @@ from typing import Any
 from .data_quality import ValidationFinding
 
 
+def _valid_sha256(value: Any) -> bool:
+    text = str(value).lower()
+    return len(text) == 64 and all(character in "0123456789abcdef" for character in text)
+
+
 def inventory_findings(report: Mapping[str, Any]) -> tuple[ValidationFinding, ...]:
     """Translate inventory evidence into stable validation findings."""
 
@@ -32,10 +37,34 @@ def inventory_findings(report: Mapping[str, Any]) -> tuple[ValidationFinding, ..
                 ValidationFinding(
                     f"source.{dataset}.headers",
                     "Critical",
-                    "Passed" if not item.get("missing_headers") else "Failed",
+                    ("Passed" if item.get("headers") == item.get("required_headers") else "Failed"),
                     str(item.get("headers", [])),
                     str(item.get("required_headers", [])),
                     "required CSV header contract",
+                ),
+                ValidationFinding(
+                    f"source.{dataset}.checksum",
+                    "Critical",
+                    "Passed" if _valid_sha256(item.get("sha256", "")) else "Failed",
+                    str(item.get("sha256", "")),
+                    "64-character SHA-256",
+                    "source identity used for load and snapshot provenance",
+                ),
+                ValidationFinding(
+                    f"source.{dataset}.row_count",
+                    "Critical",
+                    "Passed" if int(item.get("row_count", 0)) > 0 else "Failed",
+                    str(item.get("row_count", 0)),
+                    "at least 1 data row",
+                    "empty required datasets cannot support analysis",
+                ),
+                ValidationFinding(
+                    f"source.{dataset}.required_identifiers",
+                    "Critical",
+                    "Passed" if item.get("blank_identifier_count", 0) == 0 else "Failed",
+                    str(item.get("blank_identifier_count", 0)),
+                    "0 blank identifier values",
+                    str(item.get("blank_identifier_counts", {})),
                 ),
                 ValidationFinding(
                     f"source.{dataset}.declared_grain",
@@ -52,6 +81,34 @@ def inventory_findings(report: Mapping[str, Any]) -> tuple[ValidationFinding, ..
                     str(item.get("malformed_record_count", 0)),
                     "0 malformed rows",
                     "malformed source records are never silently discarded",
+                ),
+                ValidationFinding(
+                    f"source.{dataset}.timestamp_parse",
+                    "Critical",
+                    "Passed" if item.get("invalid_timestamp_count", 0) == 0 else "Failed",
+                    str(item.get("invalid_timestamp_count", 0)),
+                    "0 invalid non-empty timestamps",
+                    "invalid timestamp text remains source evidence, never a zero date",
+                ),
+                ValidationFinding(
+                    f"source.{dataset}.missing_values",
+                    "Warning",
+                    ("Warning" if sum(item.get("missing_values", {}).values()) > 0 else "Passed"),
+                    str(sum(item.get("missing_values", {}).values())),
+                    "profiled; no hidden imputation",
+                    str(item.get("missing_values", {})),
+                ),
+                ValidationFinding(
+                    f"source.{dataset}.negative_delivery_intervals",
+                    "Warning",
+                    (
+                        "Warning"
+                        if item.get("negative_delivery_interval_count", 0) > 0
+                        else "Passed"
+                    ),
+                    str(item.get("negative_delivery_interval_count", 0)),
+                    "0 preferred",
+                    "negative intervals are excluded from duration KPIs",
                 ),
             )
         )
@@ -103,7 +160,12 @@ def reconcile_metric_values(
         python_value = python_values.get(name)
         sql_value = sql_values.get(name)
         if isinstance(python_value, (int, float)) and isinstance(sql_value, (int, float)):
-            agrees = math.isclose(float(python_value), float(sql_value), abs_tol=tolerance)
+            agrees = math.isclose(
+                float(python_value),
+                float(sql_value),
+                rel_tol=0.0,
+                abs_tol=tolerance,
+            )
         else:
             agrees = python_value == sql_value
         findings.append(

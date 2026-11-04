@@ -30,6 +30,8 @@ def test_required_database_objects_are_deployed() -> None:
                     THEN 1 ELSE 0 END) AS analytical_views,
                 SUM(CASE WHEN schemas.[name] = N'reporting' AND objects.[type] = 'V'
                     THEN 1 ELSE 0 END) AS reporting_views,
+                SUM(CASE WHEN schemas.[name] = N'audit' AND objects.[type] = 'U'
+                    THEN 1 ELSE 0 END) AS audit_tables,
                 SUM(CASE WHEN schemas.[name] = N'audit' AND objects.[type] = 'P'
                     THEN 1 ELSE 0 END) AS audit_procedures
             FROM sys.objects AS objects
@@ -44,4 +46,5 @@ def test_required_database_objects_are_deployed() -> None:
     assert row.staging_tables == 6
     assert row.analytical_views >= 1
     assert row.reporting_views >= 1
+    assert row.audit_tables >= 5
     assert row.audit_procedures >= 1

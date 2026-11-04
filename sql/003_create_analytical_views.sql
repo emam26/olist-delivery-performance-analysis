@@ -1,97 +1,119 @@
-/* Analytical views. Every view uses the latest successful batch per dataset. */
+/* Analytical views. Source views use one atomically activated six-file snapshot. */
 
 SET NOCOUNT ON;
 IF OBJECT_ID(N'stg.orders', N'U') IS NULL
     THROW 51000, 'Run staging-table creation and load successful batches first.', 1;
+IF OBJECT_ID(N'audit.dataset_snapshot_batches', N'U') IS NULL
+    THROW 51001, 'Run the current 001_create_schemas.sql before creating views.', 1;
+GO
+
+CREATE OR ALTER VIEW analytics.vw_current_snapshot_batches
+AS
+WITH latest AS
+(
+    SELECT MAX(dataset_snapshot_id) AS dataset_snapshot_id
+    FROM audit.dataset_snapshots AS s
+    WHERE s.status = 'Succeeded'
+      AND s.dataset_count = 6
+      AND (SELECT COUNT_BIG(*)
+           FROM audit.dataset_snapshot_batches AS m
+           INNER JOIN audit.load_batches AS b
+               ON b.load_batch_id = m.load_batch_id
+              AND b.dataset_name = m.dataset_name
+              AND b.source_sha256 = m.source_sha256
+              AND b.status = 'Succeeded'
+           WHERE m.dataset_snapshot_id = s.dataset_snapshot_id) = 6
+)
+SELECT m.dataset_snapshot_id, s.source_manifest_sha256,
+       m.dataset_name, m.load_batch_id, m.source_sha256,
+       b.source_filename, b.expected_row_count, b.inserted_row_count,
+       b.completed_at_utc
+FROM audit.dataset_snapshot_batches AS m
+INNER JOIN latest AS l ON l.dataset_snapshot_id = m.dataset_snapshot_id
+INNER JOIN audit.dataset_snapshots AS s
+    ON s.dataset_snapshot_id = m.dataset_snapshot_id
+INNER JOIN audit.load_batches AS b
+    ON b.load_batch_id = m.load_batch_id
+   AND b.dataset_name = m.dataset_name
+   AND b.source_sha256 = m.source_sha256
+   AND b.status = 'Succeeded';
 GO
 
 CREATE OR ALTER VIEW analytics.vw_current_orders_raw
 AS
-WITH latest AS
-(
-    SELECT MAX(load_batch_id) AS load_batch_id
-    FROM audit.load_batches
-    WHERE dataset_name = N'orders' AND status = 'Succeeded'
-)
 SELECT source_row_number, order_id, customer_id, order_status,
        order_purchase_timestamp, order_approved_at,
        order_delivered_carrier_date, order_delivered_customer_date,
        order_estimated_delivery_date, source_row_sha256
 FROM stg.orders
-WHERE load_batch_id = (SELECT load_batch_id FROM latest);
+WHERE load_batch_id =
+(
+    SELECT load_batch_id FROM analytics.vw_current_snapshot_batches
+    WHERE dataset_name = N'orders'
+);
 GO
 
 CREATE OR ALTER VIEW analytics.vw_current_items_raw
 AS
-WITH latest AS
-(
-    SELECT MAX(load_batch_id) AS load_batch_id
-    FROM audit.load_batches
-    WHERE dataset_name = N'order_items' AND status = 'Succeeded'
-)
 SELECT source_row_number, order_id, order_item_id, product_id, seller_id,
        shipping_limit_date, price, freight_value, source_row_sha256
 FROM stg.order_items
-WHERE load_batch_id = (SELECT load_batch_id FROM latest);
+WHERE load_batch_id =
+(
+    SELECT load_batch_id FROM analytics.vw_current_snapshot_batches
+    WHERE dataset_name = N'order_items'
+);
 GO
 
 CREATE OR ALTER VIEW analytics.vw_current_customers_raw
 AS
-WITH latest AS
-(
-    SELECT MAX(load_batch_id) AS load_batch_id
-    FROM audit.load_batches
-    WHERE dataset_name = N'customers' AND status = 'Succeeded'
-)
 SELECT source_row_number, customer_id, customer_unique_id,
        customer_zip_code_prefix, customer_city, customer_state, source_row_sha256
 FROM stg.customers
-WHERE load_batch_id = (SELECT load_batch_id FROM latest);
+WHERE load_batch_id =
+(
+    SELECT load_batch_id FROM analytics.vw_current_snapshot_batches
+    WHERE dataset_name = N'customers'
+);
 GO
 
 CREATE OR ALTER VIEW analytics.vw_current_sellers_raw
 AS
-WITH latest AS
-(
-    SELECT MAX(load_batch_id) AS load_batch_id
-    FROM audit.load_batches
-    WHERE dataset_name = N'sellers' AND status = 'Succeeded'
-)
 SELECT source_row_number, seller_id, seller_zip_code_prefix,
        seller_city, seller_state, source_row_sha256
 FROM stg.sellers
-WHERE load_batch_id = (SELECT load_batch_id FROM latest);
+WHERE load_batch_id =
+(
+    SELECT load_batch_id FROM analytics.vw_current_snapshot_batches
+    WHERE dataset_name = N'sellers'
+);
 GO
 
 CREATE OR ALTER VIEW analytics.vw_current_products_raw
 AS
-WITH latest AS
-(
-    SELECT MAX(load_batch_id) AS load_batch_id
-    FROM audit.load_batches
-    WHERE dataset_name = N'products' AND status = 'Succeeded'
-)
 SELECT source_row_number, product_id, product_category_name,
        product_name_lenght, product_description_lenght, product_photos_qty,
        product_weight_g, product_length_cm, product_height_cm, product_width_cm,
        source_row_sha256
 FROM stg.products
-WHERE load_batch_id = (SELECT load_batch_id FROM latest);
+WHERE load_batch_id =
+(
+    SELECT load_batch_id FROM analytics.vw_current_snapshot_batches
+    WHERE dataset_name = N'products'
+);
 GO
 
 CREATE OR ALTER VIEW analytics.vw_current_reviews_raw
 AS
-WITH latest AS
-(
-    SELECT MAX(load_batch_id) AS load_batch_id
-    FROM audit.load_batches
-    WHERE dataset_name = N'reviews' AND status = 'Succeeded'
-)
 SELECT source_row_number, review_id, order_id, review_score,
        review_comment_title, review_comment_message,
        review_creation_date, review_answer_timestamp, source_row_sha256
 FROM stg.reviews
-WHERE load_batch_id = (SELECT load_batch_id FROM latest);
+WHERE load_batch_id =
+(
+    SELECT load_batch_id FROM analytics.vw_current_snapshot_batches
+    WHERE dataset_name = N'reviews'
+);
 GO
 
 CREATE OR ALTER VIEW analytics.vw_orders_typed
@@ -246,6 +268,8 @@ SELECT o.order_id, o.customer_id, c.customer_unique_id, c.customer_state,
             ELSE DATEFROMPARTS(YEAR(o.order_purchase_timestamp),
                                MONTH(o.order_purchase_timestamp), 1) END AS purchase_month,
        CAST(CASE WHEN LOWER(LTRIM(RTRIM(o.order_status))) = N'delivered'
+                 THEN 1 ELSE 0 END AS bit) AS is_delivered,
+       CAST(CASE WHEN LOWER(LTRIM(RTRIM(o.order_status))) = N'delivered'
                      AND o.order_delivered_customer_timestamp IS NOT NULL
                      AND o.order_estimated_delivery_timestamp IS NOT NULL
                  THEN 1 ELSE 0 END AS bit) AS is_delivery_eligible,
@@ -263,10 +287,11 @@ SELECT o.order_id, o.customer_id, c.customer_unique_id, c.customer_state,
        CASE WHEN o.order_purchase_timestamp IS NOT NULL
                  AND o.order_delivered_customer_timestamp IS NOT NULL
                  AND o.order_delivered_customer_timestamp >= o.order_purchase_timestamp
-            THEN CAST(DATEDIFF_BIG(MINUTE, o.order_purchase_timestamp,
-                                   o.order_delivered_customer_timestamp) / 60.0
+            THEN CAST(DATEDIFF_BIG(SECOND, o.order_purchase_timestamp,
+                                   o.order_delivered_customer_timestamp) / 3600.0
                       AS decimal(18, 4)) END AS delivery_duration_hours,
-       CASE WHEN o.order_delivered_customer_timestamp IS NOT NULL
+       CASE WHEN LOWER(LTRIM(RTRIM(o.order_status))) = N'delivered'
+                 AND o.order_delivered_customer_timestamp IS NOT NULL
                  AND o.order_estimated_delivery_timestamp IS NOT NULL
                  AND CAST(o.order_delivered_customer_timestamp AS date)
                      > CAST(o.order_estimated_delivery_timestamp AS date)
@@ -274,7 +299,26 @@ SELECT o.order_id, o.customer_id, c.customer_unique_id, c.customer_state,
                                CAST(o.order_delivered_customer_timestamp AS date)) END
             AS days_late,
        CASE
-           WHEN LOWER(LTRIM(RTRIM(o.order_status))) <> N'delivered' THEN N'status_not_delivered'
+           WHEN COALESCE(LOWER(LTRIM(RTRIM(o.order_status))), N'') <> N'delivered'
+               THEN N'status_not_delivered'
+           WHEN o.order_delivered_customer_timestamp IS NULL
+               THEN N'missing_or_invalid_actual_delivery'
+           WHEN o.order_estimated_delivery_timestamp IS NULL
+               THEN N'missing_or_invalid_estimated_delivery'
+           ELSE NULL
+       END AS delivery_exclusion_reason,
+       CASE
+           WHEN o.order_purchase_timestamp IS NULL
+               THEN N'missing_or_invalid_purchase_timestamp'
+           WHEN o.order_delivered_customer_timestamp IS NULL
+               THEN N'missing_or_invalid_actual_delivery'
+           WHEN o.order_delivered_customer_timestamp < o.order_purchase_timestamp
+               THEN N'negative_delivery_interval'
+           ELSE NULL
+       END AS duration_exclusion_reason,
+       CASE
+           WHEN COALESCE(LOWER(LTRIM(RTRIM(o.order_status))), N'') <> N'delivered'
+               THEN N'status_not_delivered'
            WHEN o.order_delivered_customer_timestamp IS NULL
                THEN N'missing_or_invalid_actual_delivery'
            WHEN o.order_estimated_delivery_timestamp IS NULL
@@ -305,7 +349,7 @@ AS
 SELECT DISTINCT i.order_id,
        COALESCE(p.product_category_name, N'(Missing category)') AS product_category_name
 FROM analytics.vw_order_items AS i
-INNER JOIN analytics.vw_products_canonical AS p ON p.product_id = i.product_id
+LEFT JOIN analytics.vw_products_canonical AS p ON p.product_id = i.product_id
 WHERE NULLIF(LTRIM(RTRIM(i.order_id)), N'') IS NOT NULL
-  AND p.product_id IS NOT NULL;
+  AND NULLIF(LTRIM(RTRIM(i.product_id)), N'') IS NOT NULL;
 GO

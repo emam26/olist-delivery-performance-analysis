@@ -14,12 +14,19 @@ class DatasetSpec:
     columns: tuple[str, ...]
     natural_key: tuple[str, ...]
     timestamp_columns: tuple[str, ...] = ()
+    identifier_columns: tuple[str, ...] = ()
 
     @property
     def key_columns(self) -> tuple[str, ...]:
         """Compatibility name for the declared natural key."""
 
         return self.natural_key
+
+    @property
+    def required_identifiers(self) -> tuple[str, ...]:
+        """Columns that must contain nonblank identifiers on every source row."""
+
+        return self.identifier_columns or self.natural_key
 
 
 DATASET_SPECS: tuple[DatasetSpec, ...] = (
@@ -44,6 +51,7 @@ DATASET_SPECS: tuple[DatasetSpec, ...] = (
             "order_delivered_customer_date",
             "order_estimated_delivery_date",
         ),
+        ("order_id", "customer_id"),
     ),
     DatasetSpec(
         "order_items",
@@ -59,6 +67,7 @@ DATASET_SPECS: tuple[DatasetSpec, ...] = (
         ),
         ("order_id", "order_item_id"),
         ("shipping_limit_date",),
+        ("order_id", "order_item_id", "product_id", "seller_id"),
     ),
     DatasetSpec(
         "customers",
@@ -71,6 +80,8 @@ DATASET_SPECS: tuple[DatasetSpec, ...] = (
             "customer_state",
         ),
         ("customer_id",),
+        (),
+        ("customer_id",),
     ),
     DatasetSpec(
         "sellers",
@@ -81,6 +92,8 @@ DATASET_SPECS: tuple[DatasetSpec, ...] = (
             "seller_city",
             "seller_state",
         ),
+        ("seller_id",),
+        (),
         ("seller_id",),
     ),
     DatasetSpec(
@@ -98,6 +111,8 @@ DATASET_SPECS: tuple[DatasetSpec, ...] = (
             "product_width_cm",
         ),
         ("product_id",),
+        (),
+        ("product_id",),
     ),
     DatasetSpec(
         "reviews",
@@ -113,6 +128,7 @@ DATASET_SPECS: tuple[DatasetSpec, ...] = (
         ),
         ("review_id", "order_id"),
         ("review_creation_date", "review_answer_timestamp"),
+        ("review_id", "order_id"),
     ),
 )
 

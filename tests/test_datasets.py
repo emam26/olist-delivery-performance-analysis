@@ -18,6 +18,13 @@ def test_customer_and_product_source_spellings_are_explicit() -> None:
     products = _spec("products")
 
     assert customers.natural_key == ("customer_id",)
+    assert customers.required_identifiers == ("customer_id",)
+    assert _spec("order_items").required_identifiers == (
+        "order_id",
+        "order_item_id",
+        "product_id",
+        "seller_id",
+    )
     assert "customer_unique_id" in customers.columns
     assert "product_name_lenght" in products.columns
     assert "product_description_lenght" in products.columns

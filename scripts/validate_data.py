@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 
 from olist_delivery.data_quality import (
     ValidationFinding,
@@ -46,15 +47,15 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _sql_findings(rows: tuple[object, ...]) -> tuple[ValidationFinding, ...]:
+def _sql_findings(rows: tuple[Any, ...]) -> tuple[ValidationFinding, ...]:
     return tuple(
         ValidationFinding(
-            check_id=f"sql.{row[0]}",
-            severity="Warning" if str(row[1]).lower() == "warning" else "Critical",
-            status=str(row[1]),
-            observed_value=str(row[2] or ""),
-            expected_value=str(row[3] or ""),
-            details=str(row[4]),
+            check_id=f"sql.{row[1]}",
+            severity="Warning" if str(row[2]).lower() == "warning" else "Critical",
+            status=str(row[2]),
+            observed_value=str(row[3] or ""),
+            expected_value=str(row[4] or ""),
+            details=str(row[5]),
         )
         for row in rows
     )
@@ -62,14 +63,16 @@ def _sql_findings(rows: tuple[object, ...]) -> tuple[ValidationFinding, ...]:
 
 def main() -> int:
     args = build_parser().parse_args()
+    sql_validation_run_id: int | None = None
     try:
         inventory = json.loads(args.inventory_report.read_text(encoding="utf-8"))
         findings = list(inventory_findings(inventory))
         if args.sqlserver:
             with database_connection() as connection:
-                findings.extend(
-                    _sql_findings(run_sql_validation(connection, fail_on_warning=False))
-                )
+                sql_rows = run_sql_validation(connection, fail_on_warning=False)
+                findings.extend(_sql_findings(sql_rows))
+                if sql_rows:
+                    sql_validation_run_id = int(sql_rows[0][0])
         else:
             findings.append(
                 ValidationFinding(
@@ -81,8 +84,18 @@ def main() -> int:
                     "pass --sqlserver only after SQL objects and staging loads exist",
                 )
             )
-        write_validation_json(findings, args.output, overwrite=args.overwrite)
-        write_validation_markdown(findings, args.summary, overwrite=args.overwrite)
+        write_validation_json(
+            findings,
+            args.output,
+            run_id=sql_validation_run_id,
+            overwrite=args.overwrite,
+        )
+        write_validation_markdown(
+            findings,
+            args.summary,
+            run_id=sql_validation_run_id,
+            overwrite=args.overwrite,
+        )
         summary = render_validation_summary(findings)
     except Exception as exc:
         print(f"Validation failed: {safe_database_error(exc)}")
@@ -90,6 +103,8 @@ def main() -> int:
     status = overall_status(findings)
     print(summary, end="")
     print(f"Validation status: {status}")
+    if sql_validation_run_id is not None:
+        print(f"SQL validation run ID: {sql_validation_run_id}")
     if status == "failed" or (args.strict and status != "passed"):
         return 1
     return 0

@@ -30,8 +30,6 @@ def main() -> int:
     data_directory = args.data_directory or settings.raw_data_directory
     try:
         inventory = json.loads(args.inventory_report.read_text(encoding="utf-8"))
-        if inventory.get("status") == "failed":
-            raise DatasetLoadError("inventory status is failed; resolve source issues first")
         with database_connection(settings.database) as connection:
             outcomes = load_required_files(
                 connection,
@@ -47,10 +45,11 @@ def main() -> int:
         return 1
     for outcome in outcomes:
         print(
-            f"{outcome.dataset}: {outcome.status}; rows={outcome.inserted_row_count}; "
-            f"sha256={outcome.source_sha256}"
+            f"{outcome.dataset}: {outcome.status}; batch={outcome.load_batch_id}; "
+            f"source_rows={outcome.source_row_count}; "
+            f"inserted_rows={outcome.inserted_row_count}; sha256={outcome.source_sha256}"
         )
-    print("Staging load completed. Run SQL validation before analysis.")
+    print("Complete dataset snapshot activated. Run SQL validation before analysis.")
     return 0
 
 
