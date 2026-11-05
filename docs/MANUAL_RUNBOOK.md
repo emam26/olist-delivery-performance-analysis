@@ -297,16 +297,42 @@ Action:
 1. Open `powerbi/Olist_Delivery_Analysis.pbip` in Power BI Desktop.
 2. Confirm all eight CSV partitions resolve to one export directory; update the
    TMDL paths if the local directory is not `reports/exports/olist_snapshot_1`.
-3. Refresh the model and confirm the four pages load without broken visuals.
-4. Import `powerbi/Olist_Delivery_Theme.json` if the navy/green/amber theme is not
-   already applied.
+3. Refresh the model and confirm **Overview**, **Regions & Sellers**, **Customer
+   Experience**, and **Data Quality** load without broken visuals. On an unfiltered
+   snapshot #1 report, verify the seven Overview cards show 99,441 total orders,
+   96,470 eligible orders, 93.23% on-time rate, 6,534 late orders, and 12.56,
+   10.22, and 23.10 days for average, median, and P90 delivery duration.
+4. Import `powerbi/Olist_Delivery_Theme.json` if the light-canvas, navy, blue,
+   green, amber, and red theme is not already applied. The native page tabs are the
+   checked-in navigation. To add persistent navigation, use **Insert > Buttons >
+   Navigator > Page navigator**, format it with the theme, copy it to every page,
+   and test all four destinations. Confirm the review-distribution legend maps
+   **Late** to red and **On Time** to green after theme application.
 5. Verify that the state, seller, and category comparison measures suppress groups
    below `eligible_order_count >= 30`. If a visual has been rebuilt from raw summary
    columns, apply that threshold directly to the corresponding disconnected table;
    do not use the order-level threshold measure as a cross-table filter.
-6. Check slicers, chart titles, percentage denominators, null display, review-score
-   class behavior, and the non-additive seller/category disclaimers.
-7. Follow `powerbi/README.md`, `data_model.md`, `measures.dax`, and
+6. Confirm the interaction scope: Page-1 order-level slicers affect order cards,
+   supporting exclusion cards, and exclusion visuals but not monthly snapshot
+   charts. Confirm that the monthly eligible-order volume and tooltip counts are
+   visible for interpreting low-volume months, and that delivery-status and duration
+   exclusions remain separate cohorts. The reason bars must omit the blank eligible
+   group and sum to their respective exclusion cards.
+7. Confirm the local interaction scope: the customer-state slicer affects only state
+   visuals; the seller-state slicer affects only the seller visual; and the product
+   category slicer affects only category visuals. Check chart titles, descending
+   late-rate sorting, percentage denominators, null display, review-score class
+   behavior, Late/red and On Time/green colors, and the non-additive seller/category
+   disclaimers. Confirm State Median Delivery Hours is blank on the total row and
+   all Category Detail totals are blank rather than presented as global values.
+8. If a reset action is needed, make one page-specific default bookmark at a time:
+   clear that page's intended slicers; in **View > Bookmarks**, add a bookmark with
+   **Data** and **Current page** enabled and **All visuals** selected; then add a
+   blank button and set **Format visual > Action** to that page's bookmark. Test it
+   after selecting every local slicer. It must restore only the intended page state;
+   do not hand-edit action-button JSON or use one bookmark across disconnected
+   summary-table scopes.
+9. Follow `powerbi/README.md`, `data_model.md`, `measures.dax`, and
    `dashboard_specification.md`, then complete every item in `reconciliation.md`.
 
 Expected pattern: exact count agreement, tolerance-bounded rates/durations, visible

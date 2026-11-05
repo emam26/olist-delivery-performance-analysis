@@ -2,7 +2,7 @@
 
 > Understanding delivery times, late orders, and customer reviews with SQL, Python, and Power BI.
 
-![Status: Dashboard source prepared; Desktop verification pending](https://img.shields.io/badge/status-dashboard%20verification%20pending-yellow)
+![Status: Snapshot 1 dashboard render reported; post-edit verification pending](https://img.shields.io/badge/status-snapshot%201%20render%20reported%3B%20post--edit%20verification%20pending-yellow)
 ![Python](https://img.shields.io/badge/language-Python-3776AB?logo=python&logoColor=white)
 ![SQL Server](https://img.shields.io/badge/database-SQL%20Server-CC2927)
 ![Power BI](https://img.shields.io/badge/dashboard-Power%20BI-F2C811)
@@ -10,9 +10,10 @@
 The project addresses a practical question: **where do delivery delays appear in Olist's historical orders, and how do those orders compare with on-time deliveries?** The implementation uses SQL and Python to prepare the data and Power BI to present the findings.
 
 > [!NOTE]
-> The Python, SQL Server, export, and reconciliation workflow has been exercised by
-> the project operator for dataset snapshot #1. The editable Power BI source has
-> not yet been reopened and visually validated in Power BI Desktop. No dashboard
+> The project operator reports that the snapshot #1 PBIP opened, refreshed, and
+> rendered with the Overview cards matching the reconciled baseline. This is
+> operator-supplied runtime evidence, not a claim that Codex performed the check.
+> Revalidate rendering and filter behavior after every source edit; no dashboard
 > screenshot or causal business finding is claimed here.
 
 ## Purpose
@@ -94,11 +95,14 @@ If multiple reviews exist for one order, the analysis will first inspect them an
 
 ## Power BI pages
 
-- **Delivery overview:** eligible orders, on-time rate, delivery-time distribution, and monthly patterns.
-- **Regions and sellers:** group sizes, late-delivery rates, delivery times, and
-  non-additive category context.
-- **Customer reviews:** review distributions alongside delivery outcomes.
-- **Data quality:** missing fields, exclusions, unmatched records, and reconciliation totals.
+- **Overview:** order-level KPIs, filter-responsive exclusions, and reconciled
+  monthly snapshot trends.
+- **Regions & Sellers:** sample-size-aware state and seller comparisons, with
+  non-additive attribution clearly labeled.
+- **Customer Experience:** review distributions and descriptive review/delivery
+  comparisons, alongside local category analysis.
+- **Data Quality:** active-snapshot validation, provenance, source row counts, and
+  exclusions.
 
 The editable PBIP/PBIR source is in [`powerbi/`](powerbi/). It contains four
 report pages, a TMDL model with the order-level and disconnected reporting tables,
@@ -159,8 +163,10 @@ Before publishing findings, the project should demonstrate that:
 
 The operator-reported snapshot #1 evidence includes 446,802 source rows across six
 datasets, a successfully activated snapshot, completed SQL data-quality validation,
-and reconciled internal delivery KPI counts. Desktop report rendering and visual
-filter behavior remain manual verification steps.
+reconciled internal delivery KPI counts, a successful PBIP refresh/render, and a
+Data Quality display of zero failed checks, three warnings, and snapshot ID 1.
+Rendering and visual-filter behavior must still be rechecked after every source
+change.
 
 ## Reproduce from a fresh checkout
 
@@ -189,10 +195,11 @@ Differences between groups and associations with review scores will be described
 ## Current setup
 
 The reproducible Python, SQL Server, validation, and export layers have been
-operator-verified for snapshot #1. The editable Power BI source is implemented but
-its Desktop refresh, visual bindings, filters, and screenshots remain **NOT
-VERIFIED**. Raw data, local exports, credentials, and generated database artifacts
-remain outside version control.
+operator-verified for snapshot #1. The operator also reports that the PBIP refreshes
+and renders the snapshot in Power BI Desktop. Visual behavior after the current
+source refinements, accessibility review, and publication screenshots remain
+pending manual verification. Raw data, local exports, credentials, and generated
+database artifacts remain outside version control.
 
 Start with the [manual runbook](docs/MANUAL_RUNBOOK.md). The implemented design is
 documented in [architecture](docs/ARCHITECTURE.md), [methodology](docs/METHODOLOGY.md),

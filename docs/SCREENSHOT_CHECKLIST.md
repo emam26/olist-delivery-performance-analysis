@@ -15,15 +15,19 @@ Do not create placeholder or synthetic screenshots.
 
 ## Required captures
 
-1. Delivery overview: delivered/eligible cards, rates, duration cards, monthly trend,
-   duration distribution, and visible exclusion context.
-2. Regions and sellers: state comparison, seller sample-size threshold, seller table
-   or scatter, and the non-additivity warning.
-3. Customer reviews: review distribution, late/on-time comparison, sample sizes,
-   missing-review indicator, and descriptive-association subtitle.
-4. Data quality: active snapshot ID, validation run/status, validation table, source
-   row reconciliation, and hashes truncated only for display (retain full values in
-   the manifest).
+1. Overview: the seven headline KPI cards, both supporting exclusion cards, monthly
+   rate/volume charts, and both reason breakdowns. Show that monthly charts are
+   snapshot summaries and that the two exclusion cohorts are separate.
+2. Regions & Sellers: sorted state and seller late-rate comparisons, the visible
+   30-order threshold, the state volume/duration scatter and detail table,
+   local-slicer scope, and the non-additivity warning.
+3. Customer Experience: review distribution, late/on-time comparison, sample sizes,
+   missing-review indicator, local category-filter scope, and the
+   descriptive-association subtitle.
+4. Data Quality: active snapshot ID, validation status, zero-or-more failed checks,
+   warning count, source-row reconciliation, validation table, and provenance table.
+   Preserve full hashes in the data/manifest even if the screenshot view scrolls
+   horizontally.
 5. Optional methods view: model relationships showing the single-direction Calendar
    relationship and disconnected summary tables.
 

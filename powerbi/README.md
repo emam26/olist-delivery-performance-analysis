@@ -31,11 +31,19 @@ export command before refreshing; the CSVs and manifest are ignored artifacts an
 must not be committed. If the repository is opened on another machine, update the
 eight partition paths to that machine's one immutable export directory.
 
-The four PBIR pages provide the dashboard structure and core bound visuals. Open
-the project in Power BI Desktop, refresh the local partitions, import
-`Olist_Delivery_Theme.json` if the theme is not already applied, and complete the
-visual-level sample-size and tooltip checks in `reconciliation.md` before taking
-screenshots.
+The four PBIR pages are **Overview**, **Regions & Sellers**, **Customer
+Experience**, and **Data Quality**. The project operator reports that snapshot #1
+opened, refreshed, and rendered in Desktop. Reopen the project after any source
+change, refresh the local partitions, import `Olist_Delivery_Theme.json` if the
+theme is not already applied, and complete the visual-level sample-size,
+local-slicer, color, and tooltip checks in `reconciliation.md` before taking
+screenshots. The native page tabs are the checked-in navigation. If a persistent
+navigator is wanted, create it in Desktop with **Insert > Buttons > Navigator >
+Page navigator**, format it with the checked-in theme, copy it to each page, and
+test all four destinations. The source has no generated action/bookmark contract,
+so create a reset control in Desktop: save one default-state bookmark per page with
+**Data** and **Current page** enabled, then attach a blank button's action to the
+matching bookmark. Do not use one reset bookmark across disconnected page scopes.
 
 No dashboard result, screenshot, or performance claim is verified until the manual
 runbook checks have been completed against the operator's local data.

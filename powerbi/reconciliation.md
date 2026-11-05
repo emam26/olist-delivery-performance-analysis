@@ -47,12 +47,25 @@ match exactly. `on_time_orders + late_orders` must equal eligible orders.
 
 ## Filter behavior
 
-- Select one purchase month and confirm cards equal that month's reconciled values.
-- Select one state and confirm the state page and order-level measures agree.
+- Select one purchase month and confirm the Page-1 cards and exclusion visuals equal
+  that month's reconciled order-level values. Confirm the monthly snapshot visuals
+  do not change.
+- Confirm each exclusion-reason chart contains nonblank reason groups only and that
+  its displayed bars sum exactly to the corresponding exclusion card: 2,971 for
+  delivery-status exclusions and 2,965 for duration exclusions on snapshot #1.
+- Select a customer state in the Page-2 local slicer and confirm that only the state
+  bar, scatter, and state table change. The order-level cards must not change.
+- Select a seller state and a product category in their respective local slicers and
+  confirm they affect only their own disconnected summary visuals.
 - Confirm seller/category visuals do not filter executive cards through an
   accidental relationship.
 - Confirm groups below the minimum threshold are excluded from rankings but remain
   available for quality review.
+- Confirm the State Median Delivery Hours total and all Category Detail totals are
+  blank. The global median and global late rate must be read from `order_delivery`
+  KPI measures, never from disconnected summary-table totals.
+- Confirm the review legend explicitly maps **Late** to red (`#D85858`) and
+  **On Time** to green (`#18866A`).
 - Confirm `orders_without_usable_review` is not summed across review-score rows;
   it is repeated class-level context in that summary view.
 

@@ -91,3 +91,7 @@ Never combine files from two export directories.
 - Page-1 order-level slicers do not propagate to the disconnected monthly table.
   The monthly visuals are therefore snapshot-level reconciled summaries, not
   slicer-responsive recomputations of the order-level table.
+- The PBIR has three intentionally local summary-table slicers: customer state on
+  the state comparison, seller state on the seller comparison, and product category
+  on the category comparison. They must not be presented as report-wide controls.
+  Their target tables have no relationships to each other or to `order_delivery`.
