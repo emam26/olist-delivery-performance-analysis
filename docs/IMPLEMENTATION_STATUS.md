@@ -1,11 +1,12 @@
 # Implementation status
 
-Last updated: 2026-11-04
+Last updated: 2026-11-05 (snapshot evidence supplied by the operator)
 
 ## Evidence categories
 
 - **Implemented:** source files have been written and statically reviewed.
-- **Pending re-verification:** a prior result exists, but code changed afterward.
+- **Pending re-verification:** a prior result exists, but an affected source file
+  changed afterward.
 - **NOT RUN:** no execution evidence has been supplied for this checkpoint.
 - **Verified:** reserved for a check whose non-secret output the operator has
   supplied and whose scope is recorded.
@@ -16,19 +17,19 @@ Last updated: 2026-11-04
 |---|---|---|
 | Python 3.13.13 environment | Implemented | Verified by user before current edits |
 | Project/development dependencies | Implemented | Installed successfully before current edits |
-| Ruff lint and format | Current files edited | Pending re-verification; prior checks passed |
-| Offline unit tests | Tests added/edited | Pending re-verification; prior result was 48 passed |
-| SQL Server integration test | Explicitly opt-in | Prior offline run deselected one SQL Server test; live test NOT RUN |
-| Six-file dataset contracts | Implemented | NOT RUN against real CSV files |
-| Offline inventory and hashes | Implemented | NOT RUN |
-| SQL Server database objects | Snapshot-aware ordered scripts implemented | NOT DEPLOYED / NOT RUN |
-| Transactional/idempotent loader | Per-file transactions plus atomic snapshot activation implemented | Pending unit re-verification; live SQL load NOT RUN |
-| Analytical and reporting views | Implemented | NOT RUN |
-| SQL data-quality procedure | Implemented | NOT RUN |
-| Independent metric reconciliation | Implemented | NOT RUN |
-| Dashboard CSV export | Validation-gated provenance export implemented | NOT RUN |
-| Power BI PBIP/PBIR model, measures, four-page layout, and theme | Portfolio refinements prepared | Operator reports snapshot #1 refresh/render and baseline cards; post-refinement visual, filter, color, and accessibility checks pending |
-| Empirical findings | Template only | No findings claimed |
+| Ruff lint and format | Current files edited | Operator reports `ruff check .` passed and formatting passed for 45 files |
+| Offline unit tests | Offline suite configured; SQL Server test explicitly opt-in | Operator reports 72 passed, 1 deselected |
+| Six-file dataset contracts and inventory | Implemented | Snapshot #1 artifacts record the six required files, row counts, and SHA-256 identities |
+| SQL Server database objects and snapshot activation | Snapshot-aware ordered scripts implemented | Snapshot #1 is recorded as a complete six-file successful snapshot |
+| Transactional/idempotent loader | Per-file transactions plus atomic snapshot activation implemented | Snapshot #1 load/provenance checks passed; a fresh idempotency rerun is not claimed here |
+| Analytical and reporting views | Implemented | Snapshot #1 dashboard export records the source reporting views and output hashes |
+| SQL data-quality procedure | Implemented | Validation run #1: Warning, no failed checks, three warnings |
+| Independent metric reconciliation | Implemented | `reports/metric_reconciliation.json`: 15/15 checks passed |
+| Dashboard CSV export | Validation-gated provenance export implemented | Snapshot #1: eight exported CSVs plus manifest |
+| Power BI PBIP/PBIR model, measures, four-page layout, and theme | Portfolio refinements prepared | Operator reports Snapshot #1 refresh/render, reconciled Overview cards, and verified State/Category global benchmark totals; navigation, clear-slicer, and post-edit accessibility checks remain unverified |
+| Portfolio screenshots | Four Snapshot #1 page captures are present under `docs/images/` and embedded in `README.md` | Content inspected as operator-produced artifacts; replacement captures require the screenshot checklist and privacy review |
+| Local Power BI PDF | Operator reports `Olist_Delivery_Analysis.pdf` at the repository root | Local source artifact only; this assignment does not recommend adding it to version control |
+| Empirical findings | Evidence-backed documentation | See `docs/ANALYSIS_FINDINGS.md`; Snapshot #1 Q7-Q9 results supplied by the operator |
 
 ## Implemented safeguards
 
@@ -47,14 +48,20 @@ Last updated: 2026-11-04
 
 ## Checks still required
 
-1. Confirm the six manually acquired files and their exact headers/hashes.
-2. Re-run Ruff and the offline unit tests after the current edits.
-3. Create the dedicated SQL Server database and deploy numbered scripts.
-4. Run SQL-marked integration checks against a dedicated test database.
-5. Inventory and load the real CSV files; record the active snapshot manifest.
-6. Run logged SQL validation and independent metric reconciliation.
-7. Export/import dashboard data and complete Power BI reconciliation.
-8. Populate findings only from those verified artifacts.
+1. Re-run Ruff and the offline unit tests after any future Python, test, or style
+   change.
+2. Run the opt-in SQL Server integration test only against a dedicated configured
+   database if its environment is available.
+3. Re-run Q7-Q9 in `sql/006_analysis_queries.sql` after any data or logic change;
+   review and record replacement severity, promise-window, and concentration
+   outputs before updating published findings.
+4. Refresh Power BI after any data/model change and repeat the visual, local-slicer,
+   colour, accessibility, and screenshot checks in `powerbi/reconciliation.md`.
+5. Create native Desktop navigation and Clear all slicers controls only after their
+   definitions have been runtime-verified; they are not currently a verified feature.
+6. Obtain human approval of the current screenshots and any public PDF before adding
+   or publishing those artifacts; verify they contain no local paths or sensitive
+   metadata.
 
 No statement in this document implies that a command, SQL script, test, source
 download, database connection, or dashboard refresh has been executed by Codex.

@@ -1,213 +1,199 @@
 # Olist Delivery Performance Analysis
 
-> Understanding delivery times, late orders, and customer reviews with SQL, Python, and Power BI.
+An evidence-backed case study of where a historical e-commerce delivery process
+meets its promised dates, where it does not, and how to investigate the slow tail
+without losing data quality or denominator discipline.
 
-![Status: Snapshot 1 dashboard render reported; post-edit verification pending](https://img.shields.io/badge/status-snapshot%201%20render%20reported%3B%20post--edit%20verification%20pending-yellow)
-![Python](https://img.shields.io/badge/language-Python-3776AB?logo=python&logoColor=white)
-![SQL Server](https://img.shields.io/badge/database-SQL%20Server-CC2927)
-![Power BI](https://img.shields.io/badge/dashboard-Power%20BI-F2C811)
+> Historical public-data analysis, not a live Olist operational dashboard. Snapshot
+> #1 is the documented analytical baseline; figures below are not current business
+> performance.
 
-The project addresses a practical question: **where do delivery delays appear in Olist's historical orders, and how do those orders compare with on-time deliveries?** The implementation uses SQL and Python to prepare the data and Power BI to present the findings.
+## Executive summary
 
-> [!NOTE]
-> The project operator reports that the snapshot #1 PBIP opened, refreshed, and
-> rendered with the Overview cards matching the reconciled baseline. This is
-> operator-supplied runtime evidence, not a claim that Codex performed the check.
-> Revalidate rendering and filter behavior after every source edit; no dashboard
-> screenshot or causal business finding is claimed here.
+Snapshot #1 reconciles an order-level Python implementation with SQL Server and
+publishes a manifest-bound Power BI export. Of 96,470 orders eligible for delivery
+classification, 89,936 arrived on time and 6,534 arrived late: an on-time rate of
+93.23%. The median valid delivery duration was 10.22 days, while P90 was 23.10
+days—evidence that the slower tail deserves separate operational attention.
 
-## Purpose
+This project deliberately keeps missing timestamps, exclusions, review selection,
+and seller/category attribution visible. It describes associations and distributions;
+it does not claim a seller, state, or delivery outcome caused customer satisfaction.
 
-The project is intended to help an analyst answer practical delivery questions: how often orders arrive after the estimated date, how delivery times vary across groups, and whether late orders are associated with different customer review scores.
+## Verified Snapshot #1 KPIs
 
-It is a historical portfolio analysis, not work commissioned by Olist. The findings will describe the supplied data rather than current business performance.
-
-## Data source
-
-The source is the [Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce), published by Olist on Kaggle. The publisher describes approximately 100,000 orders from 2016 to 2018.
-
-Download the files from that source and retain its attribution and license
-information. Raw dataset files are not bundled into the repository. Inventory,
-load, snapshot, validation, and export artifacts record input filenames, hashes,
-and row counts for reproducibility.
-
-The required inputs are orders, order items, customers, sellers, products, and
-reviews. Payment data is outside the current analytical scope.
-
-## Questions to answer
-
-- What share of delivered orders arrived on or before the estimated delivery date?
-- What are the median and slower-end delivery times?
-- How do delivery patterns vary by month and customer state?
-- Which sellers or product categories have higher late-delivery rates, with enough orders for a useful comparison?
-- How do review-score distributions differ between on-time and late deliveries?
-- How many records are excluded from each metric, and why?
-
-The analysis will report group sizes beside rates. Small groups will not be ranked as though they provide equally reliable evidence.
-
-## Workflow
-
-1. Download and inventory the original CSV files.
-2. Load them into SQL Server staging tables without silently discarding rows.
-3. Use Python and SQL to examine keys, missing values, timestamps, and unmatched references.
-4. Create documented analytical tables and views at explicit grains.
-5. Activate all six successful source batches as one immutable analytical snapshot.
-6. Calculate delivery metrics independently in SQL and Python and reconcile them.
-7. Export validated reporting data or import reporting views into Power BI.
-8. Refresh the editable PBIP report, reconcile its unfiltered cards to the SQL and
-   Python outputs, and capture screenshots only after the publication gate passes.
-9. Publish findings only with exclusions, provenance, and limitations.
-
-The core tools are Microsoft SQL Server, T-SQL, Python, pandas, Power BI, and Git.
-
-## Implemented analytical model
-
-| Table or view | Grain and purpose |
-| --- | --- |
-| Staging tables | Preserve the input records and loading provenance. |
-| Order delivery table | One row per order, with delivery eligibility and derived durations. |
-| Order-item table | One row per source order item. |
-| Order-seller bridge | One row per distinct order and seller, for seller-level delivery comparisons. |
-| Order-category bridge | One row per distinct order and category, if category comparisons are included. |
-| Order-review view | At most one review record per order under a documented selection rule. |
-| Reporting views | Monthly, regional, seller, and review summaries. |
-
-Customer records will be joined using the order's customer key. The dataset's unique-customer identifier can support repeat-customer analysis later, but will not replace the order-specific join key.
-
-Order items and reviews can multiply rows when joined directly to orders. The order-level delivery table will remain the basis of overall order counts. Seller and category summaries will document their separate grains and will not be summed to invent a global order total.
-
-## Metric definitions
-
-| Metric | Implemented definition |
-| --- | --- |
-| Eligible delivered order | An order marked delivered with valid actual and estimated delivery dates. |
-| Late order | Actual delivery calendar date is after the estimated delivery calendar date. |
-| On-time delivery rate | Eligible orders delivered on or before their estimated date divided by all eligible orders. |
-| Purchase-to-delivery time | Elapsed time between purchase and actual customer delivery for valid, nonnegative intervals. |
-| Days late | Positive calendar-date difference between actual and estimated delivery, calculated for late orders. |
-| Review comparison | Review-score distributions for on-time and late orders with usable review data. |
-
-Calendar dates will be used for late/on-time classification so a delivery later on the estimated day is not counted as a full late day. Elapsed delivery duration will be calculated separately.
-
-Canceled, unavailable, undelivered, and incomplete orders will be reported separately rather than treated as zero-day deliveries. Missing dates and invalid intervals will have explicit exclusion reasons. Source timestamps without timezone information will not be labeled UTC.
-
-If multiple reviews exist for one order, the analysis will first inspect them and document a deterministic selection rule. It will not assume the relationship is one-to-one.
-
-## Power BI pages
-
-- **Overview:** order-level KPIs, filter-responsive exclusions, and reconciled
-  monthly snapshot trends.
-- **Regions & Sellers:** sample-size-aware state and seller comparisons, with
-  non-additive attribution clearly labeled.
-- **Customer Experience:** review distributions and descriptive review/delivery
-  comparisons, alongside local category analysis.
-- **Data Quality:** active-snapshot validation, provenance, source row counts, and
-  exclusions.
-
-The editable PBIP/PBIR source is in [`powerbi/`](powerbi/). It contains four
-report pages, a TMDL model with the order-level and disconnected reporting tables,
-and denominator-safe measures. Local CSV partitions and the `.pbix` deliverable
-remain machine-specific artifacts; they are not portfolio evidence until the
-operator refreshes and checks the report in Power BI Desktop.
-
-## Verified snapshot baseline
-
-The operator-reported snapshot #1 baseline contains 99,441 source orders and the
-following reconciled overall metrics:
-
-| Metric | Snapshot value |
+| Metric | Reconciled value |
 | --- | ---: |
+| Source orders | 99,441 |
 | Delivered orders | 96,478 |
 | Delivery-eligible orders | 96,470 |
 | On-time orders | 89,936 |
 | Late orders | 6,534 |
-| On-time delivery rate | 93.2269% |
-| Late delivery rate | 6.7731% |
-| Duration-eligible orders | 96,476 |
-| Average delivery hours | 301.4089 |
-| Median delivery hours | 245.2261 |
-| P90 delivery hours | 554.3425 |
-| P95 delivery hours | 702.6244 |
-| Average days late | 10.6201 |
+| On-time rate | 93.23% |
+| Late rate | 6.77% |
+| Average delivery duration | 12.56 days |
+| Median delivery duration | 10.22 days |
+| P90 delivery duration | 23.10 days |
+| Delivery-status exclusions | 2,971 |
+| Duration exclusions | 2,965 |
 
-These are validation references supplied by the operator for snapshot #1, not
-claims about current Olist operations. Re-run reconciliation after any refresh.
+The generated `reports/metric_reconciliation.json` records 15 passing Python-to-SQL
+KPI checks for this snapshot. The dashboard's State Detail and Category Detail
+global benchmark totals were also verified in Power BI Desktop by the project
+operator. See the [detailed findings](docs/ANALYSIS_FINDINGS.md) for definitions,
+evidence paths, and limits.
 
-## Dashboard showcase
+## Power BI dashboard
 
-Real screenshots are intentionally not included yet. After Power BI Desktop
-refresh and reconciliation, capture the four pages listed above using
-[`docs/SCREENSHOT_CHECKLIST.md`](docs/SCREENSHOT_CHECKLIST.md), then add only the
-resulting image paths here. Until that step, visual insights remain pending
-analysis and should not be inferred from the snapshot totals alone.
+The editable PBIP/PBIR/TMDL report has four implemented pages:
 
-Pending insight placeholders:
+- **Overview** — order-level KPIs, separate exclusion cohorts, and monthly snapshot
+  summaries.
+- **Regions & Sellers** — thresholded state and seller comparisons at their proper
+  grains.
+- **Customer Experience** — selected-review outcome distributions and local
+  category comparison.
+- **Data Quality** — active snapshot, validation status, provenance, and
+  exclusions.
 
-- `[Pending]` Compare monthly on-time performance after checking cohort sizes and
-  excluded purchase months.
-- `[Pending]` Compare state and seller rankings only after applying the minimum
-  eligible-order threshold and disclosing non-additive attribution.
-- `[Pending]` Describe review-score differences as associations, not causal effects.
+The following operator-produced screenshots are from the validated Snapshot #1
+report. They show the report's rendered content, not a claim that every interaction
+has been retested after subsequent edits. See the
+[screenshot checklist](docs/SCREENSHOT_CHECKLIST.md) for the capture and privacy
+requirements.
 
-## Validation and completion evidence
+### Overview
 
-Before publishing findings, the project should demonstrate that:
+The overview combines the reconciled order-level KPI cards with purchase-month
+rate/volume summaries and separate delivery-status and duration exclusion reasons.
 
-- Input and staging counts reconcile.
-- Keys are unique at each declared grain, or exceptions are explained.
-- Joins do not inflate the overall order count.
-- Every excluded order has an understandable reason.
-- SQL results agree with independently checked sample calculations.
-- Power BI totals agree with the underlying reporting views.
-- A fresh run can reproduce the published outputs from the documented input files.
+![Overview dashboard with delivery KPIs, monthly summaries, slicers, and exclusion reasons](docs/images/olist-snapshot-1-overview.png)
 
-The operator-reported snapshot #1 evidence includes 446,802 source rows across six
-datasets, a successfully activated snapshot, completed SQL data-quality validation,
-reconciled internal delivery KPI counts, a successful PBIP refresh/render, and a
-Data Quality display of zero failed checks, three warnings, and snapshot ID 1.
-Rendering and visual-filter behavior must still be rechecked after every source
-change.
+### Regions & Sellers
 
-## Reproduce from a fresh checkout
+This page compares thresholded state and seller late rates, state volume versus
+median delivery hours, and a State Detail table whose total row is the global
+order-level benchmark rather than a state roll-up.
 
-```bash
-cd /mnt/f/olist-delivery-performance-analysis
-python3.13 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
-ruff check .
-ruff format --check .
-python -m pytest -q -m "not sqlserver"
+![Regions and Sellers dashboard with ranked rate comparisons, state scatter plot, and benchmark table](docs/images/olist-snapshot-1-regions-sellers.png)
+
+### Customer Experience
+
+This page shows selected-review distributions by delivery outcome, the local
+category comparison, and the Category Detail global benchmark. Its review cards use
+an all-order scope, which is distinct from the delivery-eligible review cohort used
+for the one-star findings.
+
+![Customer Experience dashboard with review outcome distribution and category comparison](docs/images/olist-snapshot-1-customer-experience.png)
+
+### Data Quality
+
+This page presents the active snapshot, validation status, warning and failure
+counts, explicit exclusion populations, validation checks, and source provenance.
+
+![Data Quality dashboard with validation, exclusions, and source provenance](docs/images/olist-snapshot-1-data-quality.png)
+
+The report uses intentionally disconnected monthly, state, seller, category,
+review, quality, and provenance summaries. Page-1 order-level slicers do not filter
+the monthly snapshot charts; local state, seller-state, and category slicers affect
+only their designated disconnected comparisons. State and Category Detail total
+rows are explicit global order-level benchmarks, not sums of summary rows. The
+screenshots show page-tab visuals, but native page navigation and Clear all slicers
+controls remain runtime-unverified and are not presented as working functionality.
+
+## Key findings
+
+- **Reliable but not uniform:** 93.23% of eligible orders met the estimated
+  calendar-date commitment; 6,534 did not.
+- **Late orders are often material delays:** the late-order median is 7 calendar
+  days and P90 is 22 days, alongside a 10.22-day median total delivery duration.
+- **Very short promise windows have the highest observed late rate:** 25.65% for
+  fewer than three promised days (49 of 191), versus 6.77% overall. This is
+  descriptive, not proof of optimal promise calibration.
+- **Late volume is concentrated but rates differ:** SP and RJ account for 50.73% of
+  distinct late orders; their late rates are 4.49% and 12.11%, respectively.
+- **Exclusions are material context:** 2,971 delivery-status and 2,965 duration
+  exclusions are reported separately instead of becoming zero values.
+- **Reviews differ descriptively by delivery outcome:** among selected usable
+  reviews, 3,431 of 6,381 late orders (53.77%) had one star, versus 5,920 of 89,443
+  on-time orders (6.62%). This is an association, not a causal estimate.
+
+## Evidence-bounded recommendations
+
+1. **Track late-order severity as well as rate:** use the 7-day median and 22-day
+   P90 to focus on material misses, not only marginal lateness.
+2. **Start geographic investigation with SP and RJ,** balancing their combined
+   50.73% late-volume share with their different late rates.
+3. **Review short promised-window cohorts first,** then test policy changes
+   prospectively rather than inferring causality from the historical bands.
+4. **Keep delivery-status and duration exclusions visible** in every performance
+   view and retain non-additive seller/category warnings.
+5. **Use review differences as a diagnostic signal,** then evaluate interventions
+   with product, geography, and service confounders in mind.
+
+## Data and architecture
+
+The analysis uses six public Olist source CSVs (**446,802** staged records). Raw
+files and generated outputs are intentionally Git-ignored; provenance, row counts,
+and hashes are recorded in each snapshot artifact.
+
+```mermaid
+flowchart LR
+    A[Six source CSVs] --> B[Python inventory and transactional load]
+    B --> C[SQL Server staging and immutable snapshot]
+    C --> D[Analytical and reporting views]
+    D --> E[Validation and Python-to-SQL reconciliation]
+    E --> F[Manifest-bound CSV export]
+    F --> G[Power BI PBIP report]
 ```
 
-Then acquire the six source files manually, create a non-overwriting inventory,
-configure the ignored `.env`, and follow the SQL Server and Power BI phases in the
-[manual runbook](docs/MANUAL_RUNBOOK.md). Database deployment, real-data loading,
-metric reconciliation, export, and Power BI refresh/rendering remain
-environment-dependent manual steps.
+The primary grain is one canonical order. Seller and category outputs use distinct
+order-group bridges and must not be summed into global order totals. Full design:
+[architecture](docs/ARCHITECTURE.md),
+[data dictionary](docs/DATA_DICTIONARY.md), and
+[KPI definitions](docs/KPI_DEFINITIONS.md).
 
-## Interpretation limits
+## Reproducibility and quality
 
-A late order may contain items from multiple sellers. An order-level delivery timestamp does not establish which seller or carrier caused a delay.
+Snapshot #1 has a `Warning` validation status with no failed checks and three
+warnings: missing product-category labels, multiple source reviews for an order,
+and orders without items. The model preserves these limitations explicitly. The
+operator supplied current verification evidence: Ruff lint passed, Ruff formatting
+passed for 45 files, and the offline suite reported **72 passed, 1 deselected**.
 
-Differences between groups and associations with review scores will be described without causal claims. No business adoption, cost saving, or improvement in delivery performance is currently established.
+Follow the [manual runbook](docs/MANUAL_RUNBOOK.md) for the real sequence:
 
-## Current setup
+```text
+source CSV → Python inventory/load → SQL Server validation/reconciliation
+→ reporting export → Power BI refresh and Desktop checks
+```
 
-The reproducible Python, SQL Server, validation, and export layers have been
-operator-verified for snapshot #1. The operator also reports that the PBIP refreshes
-and renders the snapshot in Power BI Desktop. Visual behavior after the current
-source refinements, accessibility review, and publication screenshots remain
-pending manual verification. Raw data, local exports, credentials, and generated
-database artifacts remain outside version control.
+The tracked PBIP contains machine-specific CSV partitions. A new machine must
+create or select one complete export directory and update all eight TMDL partition
+paths before refreshing. Never mix files from two snapshots or commit credentials,
+raw data, exports, or local Power BI state.
 
-Start with the [manual runbook](docs/MANUAL_RUNBOOK.md). The implemented design is
-documented in [architecture](docs/ARCHITECTURE.md), [methodology](docs/METHODOLOGY.md),
-[KPI definitions](docs/KPI_DEFINITIONS.md), and the
-[implementation status](docs/IMPLEMENTATION_STATUS.md). Source CSV files,
-credentials, generated reports, and database artifacts are intentionally excluded
-from version control.
+## Tools
 
-After all reconciliations are verified, use the
-[screenshot checklist](docs/SCREENSHOT_CHECKLIST.md) before adding real dashboard
-images to the portfolio.
+Python 3.13, pandas, SQL Server, T-SQL, pyodbc, Power BI PBIP/PBIR/TMDL, and Git.
+
+## Repository guide
+
+| Start here | Contents |
+| --- | --- |
+| [`docs/ANALYSIS_FINDINGS.md`](docs/ANALYSIS_FINDINGS.md) | Evidence, findings, limitations, and pending analyses |
+| [`docs/MANUAL_RUNBOOK.md`](docs/MANUAL_RUNBOOK.md) | Environment, SQL Server, validation, export, and Power BI workflow |
+| [`sql/`](sql/) | Ordered database objects and read-only analysis queries |
+| [`src/olist_delivery/`](src/olist_delivery/) | Inventory, loading, validation, reconciliation, and export code |
+| [`powerbi/`](powerbi/) | Editable PBIP/PBIR/TMDL project, model notes, and reconciliation checklist |
+| [`tests/`](tests/) | Offline and opt-in SQL Server test coverage |
+
+## Limitations and next steps
+
+The dataset is historical, timestamps have no declared timezone, and the dashboard
+is an analytical snapshot rather than a live service. Descriptive state, seller,
+category, and review differences can be confounded by geography, product mix,
+carrier operations, and selection effects. The next evidence-producing step is to
+re-run Q7–Q9 in [`sql/006_analysis_queries.sql`](sql/006_analysis_queries.sql) only
+after a data or logic change, then update the documented results from the new
+validated snapshot.
