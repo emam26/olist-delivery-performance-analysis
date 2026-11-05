@@ -124,6 +124,12 @@ Counts must match exactly; floating-point values use zero relative tolerance and
 absolute tolerance of `1e-4` in the reconciliation CLI. Power BI must then reconcile
 to the validated SQL/Python outputs.
 
+Reconciliation compares the raw Python and SQL numeric values before report
+serialization. In the metric-reconciliation JSON, integral SQL `Decimal` values are
+JSON integers, fractional values are exact base-10 strings (including trailing zeros),
+and SQL `NULL` remains JSON `null`. This representation avoids silently rounding SQL
+rates and duration statistics through binary floating-point conversion.
+
 Percentiles use a continuous interpolation definition (`PERCENTILE_CONT` in SQL).
 Rates should be accompanied by denominators. Small group rankings are suppressed or
 flagged, and confidence intervals should be considered when comparisons are close.

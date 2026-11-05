@@ -244,7 +244,9 @@ Purpose: compare independent Python definitions with SQL analytical outputs.
 
 Expected pattern: exact count agreement, tolerance-bounded numeric agreement, and a
 passed overall status. Return the metric comparison summary. Stop if any core metric
-differs.
+differs. In the JSON artifact, fractional SQL decimal metrics are exact base-10
+strings, integral decimal values are integers, and SQL nulls are JSON nulls; numeric
+reconciliation occurs before this reporting conversion.
 
 ### C5. Confirm idempotency
 
