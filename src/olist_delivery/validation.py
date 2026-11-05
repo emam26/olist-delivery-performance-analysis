@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
+from decimal import Decimal
+from fractions import Fraction
 from typing import Any
 
 from .data_quality import ValidationFinding
@@ -147,6 +149,18 @@ def run_sql_validation(connection: Any, *, fail_on_warning: bool = False) -> tup
     return rows
 
 
+def _is_metric_number(value: Any) -> bool:
+    return not isinstance(value, bool) and isinstance(value, (Decimal, float, int))
+
+
+def _metric_fraction(value: Decimal | float | int) -> Fraction | None:
+    if isinstance(value, Decimal) and not value.is_finite():
+        return None
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    return Fraction(value)
+
+
 def reconcile_metric_values(
     python_values: Mapping[str, Any],
     sql_values: Mapping[str, Any],
@@ -155,26 +169,45 @@ def reconcile_metric_values(
 ) -> tuple[ValidationFinding, ...]:
     """Compare independently calculated metrics with explicit numeric tolerance."""
 
+    if not math.isfinite(tolerance) or tolerance < 0:
+        raise ValueError("tolerance must be a finite nonnegative number")
+    absolute_tolerance = Fraction(str(tolerance))
     findings = []
     for name in sorted(set(python_values) | set(sql_values)):
+        python_present = name in python_values
+        sql_present = name in sql_values
         python_value = python_values.get(name)
         sql_value = sql_values.get(name)
-        if isinstance(python_value, (int, float)) and isinstance(sql_value, (int, float)):
-            agrees = math.isclose(
-                float(python_value),
-                float(sql_value),
-                rel_tol=0.0,
-                abs_tol=tolerance,
+        if not python_present or not sql_present:
+            agrees = False
+            expectation = "metric present in both sources"
+        elif _is_metric_number(python_value) and _is_metric_number(sql_value):
+            python_number = _metric_fraction(python_value)
+            sql_number = _metric_fraction(sql_value)
+            if python_number is None or sql_number is None:
+                agrees = False
+            elif isinstance(python_value, int) or isinstance(sql_value, int):
+                # Count metrics are integers and must reconcile exactly.
+                agrees = python_number == sql_number
+            else:
+                agrees = abs(python_number - sql_number) <= absolute_tolerance
+            expectation = (
+                "exact integer agreement"
+                if isinstance(python_value, int) or isinstance(sql_value, int)
+                else f"agreement within {tolerance}"
             )
         else:
             agrees = python_value == sql_value
+            expectation = "exact agreement"
+        python_observed = repr(python_value) if python_present else "<missing key>"
+        sql_observed = repr(sql_value) if sql_present else "<missing key>"
         findings.append(
             ValidationFinding(
                 f"metric.{name}",
                 "Critical",
                 "Passed" if agrees else "Failed",
-                f"python={python_value!r}; sql={sql_value!r}",
-                f"agreement within {tolerance}",
+                f"python={python_observed}; sql={sql_observed}",
+                expectation,
                 "independent Python-to-SQL reconciliation",
             )
         )

@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import argparse
 import csv
-import json
 from dataclasses import asdict
 from pathlib import Path
 
 from olist_delivery.database import database_connection, safe_database_error
 from olist_delivery.datasets import DATASETS_BY_NAME
 from olist_delivery.metrics import aggregate_delivery_metrics
+from olist_delivery.serialization import dumps_report_json
 from olist_delivery.validation import reconcile_metric_values
 
 RECONCILIATION_KEYS = (
@@ -90,15 +90,13 @@ def main() -> int:
             report["sql_reconciliation"] = "NOT RUN"
         if args.output.exists():
             raise FileExistsError(f"metric report already exists: {args.output}")
+        serialized_report = dumps_report_json(report)
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(
-            json.dumps(report, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
+        args.output.write_text(serialized_report + "\n", encoding="utf-8")
     except Exception as exc:
         print(f"Metric validation failed: {safe_database_error(exc)}")
         return 1
-    print(json.dumps(report, indent=2, sort_keys=True))
+    print(serialized_report)
     print(f"Metric validation report: {args.output}")
     return 1 if failed else 0
 
