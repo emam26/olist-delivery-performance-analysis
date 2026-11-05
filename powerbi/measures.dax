@@ -1,33 +1,33 @@
-// Create these measures in the Order Delivery table unless noted otherwise.
-// Column names follow reporting.vw_order_delivery_detail.
+// Measures belong to the existing order_delivery table.
+// Boolean flags use TRUE()/FALSE(); blanks remain blanks.
 
-Orders =
-DISTINCTCOUNT('Order Delivery'[order_id])
+Total Orders =
+COUNTROWS('order_delivery')
 
 Delivered Orders =
 CALCULATE(
-    [Orders],
-    'Order Delivery'[is_delivered] = 1
+    [Total Orders],
+    'order_delivery'[is_delivered] = TRUE()
 )
 
 Delivery Eligible Orders =
 CALCULATE(
-    [Orders],
-    'Order Delivery'[is_delivery_eligible] = 1
+    [Total Orders],
+    'order_delivery'[is_delivery_eligible] = TRUE()
 )
 
 On-Time Orders =
 CALCULATE(
-    [Orders],
-    'Order Delivery'[is_delivery_eligible] = 1,
-    'Order Delivery'[is_late] = 0
+    [Total Orders],
+    'order_delivery'[is_delivery_eligible] = TRUE(),
+    'order_delivery'[is_late] = FALSE()
 )
 
 Late Orders =
 CALCULATE(
-    [Orders],
-    'Order Delivery'[is_delivery_eligible] = 1,
-    'Order Delivery'[is_late] = 1
+    [Total Orders],
+    'order_delivery'[is_delivery_eligible] = TRUE(),
+    'order_delivery'[is_late] = TRUE()
 )
 
 On-Time Rate =
@@ -37,76 +37,169 @@ Late Rate =
 DIVIDE([Late Orders], [Delivery Eligible Orders])
 
 Delivery Status Excluded Orders =
-[Orders] - [Delivery Eligible Orders]
+[Total Orders] - [Delivery Eligible Orders]
 
 Duration Eligible Orders =
 CALCULATE(
-    [Orders],
-    'Order Delivery'[is_duration_eligible] = 1
+    [Total Orders],
+    'order_delivery'[is_duration_eligible] = TRUE()
 )
 
 Duration Excluded Orders =
-[Orders] - [Duration Eligible Orders]
+[Total Orders] - [Duration Eligible Orders]
 
 Average Delivery Days =
 CALCULATE(
-    DIVIDE(AVERAGE('Order Delivery'[delivery_duration_hours]), 24),
-    'Order Delivery'[is_duration_eligible] = 1
+    DIVIDE(AVERAGE('order_delivery'[delivery_duration_hours]), 24),
+    'order_delivery'[is_duration_eligible] = TRUE()
 )
 
 Median Delivery Days =
 CALCULATE(
     PERCENTILEX.INC(
-        'Order Delivery',
-        DIVIDE('Order Delivery'[delivery_duration_hours], 24),
+        'order_delivery',
+        DIVIDE('order_delivery'[delivery_duration_hours], 24),
         0.5
     ),
-    'Order Delivery'[is_duration_eligible] = 1
+    'order_delivery'[is_duration_eligible] = TRUE()
 )
 
 P90 Delivery Days =
 CALCULATE(
     PERCENTILEX.INC(
-        'Order Delivery',
-        DIVIDE('Order Delivery'[delivery_duration_hours], 24),
+        'order_delivery',
+        DIVIDE('order_delivery'[delivery_duration_hours], 24),
         0.9
     ),
-    'Order Delivery'[is_duration_eligible] = 1
+    'order_delivery'[is_duration_eligible] = TRUE()
 )
 
 P95 Delivery Days =
 CALCULATE(
     PERCENTILEX.INC(
-        'Order Delivery',
-        DIVIDE('Order Delivery'[delivery_duration_hours], 24),
+        'order_delivery',
+        DIVIDE('order_delivery'[delivery_duration_hours], 24),
         0.95
     ),
-    'Order Delivery'[is_duration_eligible] = 1
+    'order_delivery'[is_duration_eligible] = TRUE()
 )
 
 Average Days Late =
 CALCULATE(
-    AVERAGE('Order Delivery'[days_late]),
-    'Order Delivery'[is_delivery_eligible] = 1,
-    'Order Delivery'[is_late] = 1
+    AVERAGE('order_delivery'[days_late]),
+    'order_delivery'[is_delivery_eligible] = TRUE(),
+    'order_delivery'[is_late] = TRUE()
 )
 
 Reviewed Orders =
 CALCULATE(
-    [Orders],
-    NOT ISBLANK('Order Delivery'[selected_review_score])
+    [Total Orders],
+    NOT ISBLANK('order_delivery'[selected_review_score])
 )
 
 Average Review Score =
 CALCULATE(
-    AVERAGE('Order Delivery'[selected_review_score]),
-    NOT ISBLANK('Order Delivery'[selected_review_score])
+    AVERAGE('order_delivery'[selected_review_score]),
+    NOT ISBLANK('order_delivery'[selected_review_score])
 )
 
 Orders Without Usable Review =
-[Orders] - [Reviewed Orders]
+[Total Orders] - [Reviewed Orders]
 
 Minimum Group Size = 30
+
+// Reporting-table measures use additive order counts for denominators.
+// Seller, category, and regional comparison rates stay blank below the
+// documented minimum eligible-group size.
+
+Monthly Eligible Orders =
+SUM('Monthly Delivery'[eligible_order_count])
+
+Monthly On-Time Rate =
+DIVIDE(
+    SUM('Monthly Delivery'[on_time_order_count]),
+    SUM('Monthly Delivery'[eligible_order_count])
+)
+
+Monthly Late Rate =
+DIVIDE(
+    SUM('Monthly Delivery'[late_order_count]),
+    SUM('Monthly Delivery'[eligible_order_count])
+)
+
+Monthly Delivery Status Excluded Orders =
+SUM('Monthly Delivery'[delivery_status_excluded_order_count])
+
+Monthly Duration Eligible Orders =
+SUM('Monthly Delivery'[duration_eligible_order_count])
+
+State Eligible Orders =
+SUM('State Delivery'[eligible_order_count])
+
+State On-Time Rate (Min Eligible 30) =
+VAR Eligible = SUM('State Delivery'[eligible_order_count])
+RETURN
+    IF(
+        Eligible >= [Minimum Group Size],
+        DIVIDE(SUM('State Delivery'[on_time_order_count]), Eligible)
+    )
+
+State Late Rate (Min Eligible 30) =
+VAR Eligible = SUM('State Delivery'[eligible_order_count])
+RETURN
+    IF(
+        Eligible >= [Minimum Group Size],
+        DIVIDE(SUM('State Delivery'[late_order_count]), Eligible)
+    )
+
+State Median Delivery Hours (Min Eligible 30) =
+VAR Eligible = SUM('State Delivery'[eligible_order_count])
+RETURN
+    IF(
+        Eligible >= [Minimum Group Size],
+        SELECTEDVALUE('State Delivery'[median_delivery_hours])
+    )
+
+Seller Eligible Orders =
+SUM('Seller Delivery'[eligible_order_count])
+
+Seller On-Time Rate (Min Eligible 30) =
+VAR Eligible = SUM('Seller Delivery'[eligible_order_count])
+RETURN
+    IF(
+        Eligible >= [Minimum Group Size],
+        DIVIDE(SUM('Seller Delivery'[on_time_order_count]), Eligible)
+    )
+
+Seller Late Rate (Min Eligible 30) =
+VAR Eligible = SUM('Seller Delivery'[eligible_order_count])
+RETURN
+    IF(
+        Eligible >= [Minimum Group Size],
+        DIVIDE(SUM('Seller Delivery'[late_order_count]), Eligible)
+    )
+
+Category Eligible Orders =
+SUM('Category Delivery'[eligible_order_count])
+
+Category On-Time Rate (Min Eligible 30) =
+VAR Eligible = SUM('Category Delivery'[eligible_order_count])
+RETURN
+    IF(
+        Eligible >= [Minimum Group Size],
+        DIVIDE(SUM('Category Delivery'[on_time_order_count]), Eligible)
+    )
+
+Category Late Rate (Min Eligible 30) =
+VAR Eligible = SUM('Category Delivery'[eligible_order_count])
+RETURN
+    IF(
+        Eligible >= [Minimum Group Size],
+        DIVIDE(SUM('Category Delivery'[late_order_count]), Eligible)
+    )
+
+Review Count =
+SUM('Review Delivery'[review_count])
 
 // Optional title makes the observational scope explicit.
 Review Page Title =
@@ -114,9 +207,12 @@ Review Page Title =
 
 // Create this measure in Data Quality.
 Failed Quality Checks =
-CALCULATE(
-    COUNTROWS('Data Quality'),
-    'Data Quality'[check_status] = "Failed"
+COALESCE(
+    CALCULATE(
+        COUNTROWS('Data Quality'),
+        'Data Quality'[check_status] = "Failed"
+    ),
+    0
 )
 
 Warning Quality Checks =

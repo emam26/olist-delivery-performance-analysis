@@ -1,0 +1,27 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["order_delivery", "Monthly Delivery", "State Delivery", "Seller Delivery", "Category Delivery", "Review Delivery", "Data Quality", "Source Provenance"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table order_delivery
+ref table 'Monthly Delivery'
+ref table 'State Delivery'
+ref table 'Seller Delivery'
+ref table 'Category Delivery'
+ref table 'Review Delivery'
+ref table 'Data Quality'
+ref table 'Source Provenance'
+ref table DateTableTemplate_41b078c4-dc92-4b2a-82e3-4aa7b6720147
+ref table LocalDateTable_77e388ed-6d0f-4a11-9481-8cf4bc859478
+
+ref cultureInfo en-US

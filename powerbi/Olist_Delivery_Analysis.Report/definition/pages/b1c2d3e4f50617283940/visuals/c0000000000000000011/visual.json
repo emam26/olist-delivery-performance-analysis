@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "c0000000000000000011",
+  "position": {"x": 950, "y": 220, "z": 11, "height": 360, "width": 900, "tabOrder": 11},
+  "visual": {
+    "visualType": "clusteredBarChart",
+    "query": {
+      "queryState": {
+        "Category": {"projections": [{"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Category Delivery"}}, "Property": "product_category_name"}}, "queryRef": "Category Delivery.product_category_name", "nativeQueryRef": "product_category_name"}]},
+        "Y": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "Category Delivery"}}, "Property": "Late Rate (Min Eligible 30)"}}, "queryRef": "Category Delivery.Late Rate (Min Eligible 30)", "nativeQueryRef": "Late Rate (Min Eligible 30)"}]}
+      }
+    },
+    "objects": {
+      "title": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "titleText": {"expr": {"Literal": {"Value": "'Late delivery rate by category (eligible orders >= 30)'"}}}}}],
+      "dataPoint": [{"properties": {"fill": {"solid": {"color": {"expr": {"Literal": {"Value": "'#D97706'"}}}}}}}]
+    }
+  }
+}

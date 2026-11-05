@@ -1,0 +1,105 @@
+table 'Data Quality'
+	lineageTag: 3e4a1f04-7a01-4f21-a006-000000000001
+
+	measure 'Failed Quality Checks' =
+			COALESCE(
+				CALCULATE(COUNTROWS('Data Quality'), 'Data Quality'[check_status] = "Failed"),
+				0
+			)
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000013
+
+	measure 'Warning Quality Checks' =
+			CALCULATE(COUNTROWS('Data Quality'), 'Data Quality'[check_status] = "Warning")
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000014
+
+	measure 'Validation Status' =
+			SELECTEDVALUE('Data Quality'[run_status], "Not available")
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000015
+
+	measure 'Validation Run ID' =
+			SELECTEDVALUE('Data Quality'[validation_run_id])
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000016
+
+	column validation_run_id
+		dataType: int64
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000002
+		sourceColumn: validation_run_id
+
+	column dataset_snapshot_id
+		dataType: int64
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000003
+		sourceColumn: dataset_snapshot_id
+
+	column source_manifest_sha256
+		dataType: string
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000004
+		summarizeBy: none
+		sourceColumn: source_manifest_sha256
+
+	column run_status
+		dataType: string
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000005
+		summarizeBy: none
+		sourceColumn: run_status
+
+	column started_at_utc
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000006
+		summarizeBy: none
+		sourceColumn: started_at_utc
+
+	column completed_at_utc
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000007
+		summarizeBy: none
+		sourceColumn: completed_at_utc
+
+	column check_id
+		dataType: string
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000008
+		summarizeBy: none
+		sourceColumn: check_id
+
+	column check_status
+		dataType: string
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000009
+		summarizeBy: none
+		sourceColumn: check_status
+
+	column observed_value
+		dataType: string
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000010
+		summarizeBy: none
+		sourceColumn: observed_value
+
+	column expected_value
+		dataType: string
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000011
+		summarizeBy: none
+		sourceColumn: expected_value
+
+	column message
+		dataType: string
+		lineageTag: 3e4a1f04-7a01-4f21-a006-000000000012
+		summarizeBy: none
+		sourceColumn: message
+
+	partition data_quality = m
+		mode: import
+		source =
+				let
+					Source = Csv.Document(File.Contents("F:\olist-delivery-performance-analysis\reports\exports\olist_snapshot_1\validation_results.csv"),[Delimiter=",", Columns=11, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+					#"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+					#"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"validation_run_id", Int64.Type}, {"dataset_snapshot_id", Int64.Type}, {"source_manifest_sha256", type text}, {"run_status", type text}, {"started_at_utc", type datetime}, {"completed_at_utc", type datetime}, {"check_id", type text}, {"check_status", type text}, {"observed_value", type text}, {"expected_value", type text}, {"message", type text}})
+				in
+					#"Changed Type"
+
+	annotation PBI_NavigationStepName = Navigation
+	annotation PBI_ResultType = Table

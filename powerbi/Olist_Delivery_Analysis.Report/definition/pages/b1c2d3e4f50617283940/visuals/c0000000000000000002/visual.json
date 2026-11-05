@@ -1,0 +1,10 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "c0000000000000000002",
+  "position": {"x": 290, "y": 20, "z": 2, "height": 163.33333333333334, "width": 250, "tabOrder": 2},
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {"queryState": {"Data": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "Orders Without Usable Review"}}, "queryRef": "order_delivery.Orders Without Usable Review", "nativeQueryRef": "Orders Without Usable Review"}]}}},
+    "objects": {"title": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "titleText": {"expr": {"Literal": {"Value": "'Orders without usable review'"}}}}}]}
+  }
+}

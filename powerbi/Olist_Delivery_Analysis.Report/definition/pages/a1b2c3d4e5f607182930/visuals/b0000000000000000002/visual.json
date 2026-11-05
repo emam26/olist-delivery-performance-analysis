@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "b0000000000000000002",
+  "position": {"x": 950, "y": 20, "z": 2, "height": 430, "width": 930, "tabOrder": 2},
+  "visual": {
+    "visualType": "clusteredBarChart",
+    "query": {
+      "queryState": {
+        "Category": {"projections": [{"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Seller Delivery"}}, "Property": "seller_id"}}, "queryRef": "Seller Delivery.seller_id", "nativeQueryRef": "seller_id"}]},
+        "Y": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "Seller Delivery"}}, "Property": "Late Rate (Min Eligible 30)"}}, "queryRef": "Seller Delivery.Late Rate (Min Eligible 30)", "nativeQueryRef": "Late Rate (Min Eligible 30)"}]}
+      }
+    },
+    "objects": {
+      "title": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "titleText": {"expr": {"Literal": {"Value": "'Late delivery rate by seller (eligible orders >= 30)'"}}}}}],
+      "dataPoint": [{"properties": {"fill": {"solid": {"color": {"expr": {"Literal": {"Value": "'#D97706'"}}}}}}}]
+    }
+  }
+}

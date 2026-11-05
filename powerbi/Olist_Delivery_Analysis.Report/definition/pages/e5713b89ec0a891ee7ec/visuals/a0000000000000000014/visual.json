@@ -1,0 +1,9 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "a0000000000000000014",
+  "position": {"x": 540, "y": 540, "z": 14, "height": 160, "width": 260, "tabOrder": 14},
+  "visual": {
+    "visualType": "slicer",
+    "query": {"queryState": {"Values": {"projections": [{"field": {"Column": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "order_status"}}, "queryRef": "order_delivery.order_status", "nativeQueryRef": "order_status"}]}}}
+  }
+}

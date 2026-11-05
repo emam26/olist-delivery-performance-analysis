@@ -1,0 +1,30 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "a0000000000000000010",
+  "position": {"x": 20, "y": 250, "z": 10, "height": 270, "width": 900, "tabOrder": 10},
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {"projections": [{"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Monthly Delivery"}}, "Property": "purchase_month"}}, "queryRef": "Monthly Delivery.purchase_month", "nativeQueryRef": "purchase_month"}]},
+        "Y": {"projections": [
+          {"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "Monthly Delivery"}}, "Property": "On-Time Rate"}}, "queryRef": "Monthly Delivery.On-Time Rate", "nativeQueryRef": "On-Time Rate"},
+          {"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "Monthly Delivery"}}, "Property": "Late Rate"}}, "queryRef": "Monthly Delivery.Late Rate", "nativeQueryRef": "Late Rate"}
+        ]},
+        "Tooltips": {"projections": [
+          {"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "Monthly Delivery"}}, "Property": "Eligible Orders"}}, "queryRef": "Monthly Delivery.Eligible Orders", "nativeQueryRef": "Eligible Orders"},
+          {"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "Monthly Delivery"}}, "Property": "Delivery Status Excluded Orders"}}, "queryRef": "Monthly Delivery.Delivery Status Excluded Orders", "nativeQueryRef": "Delivery Status Excluded Orders"},
+          {"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "Monthly Delivery"}}, "Property": "Duration Eligible Orders"}}, "queryRef": "Monthly Delivery.Duration Eligible Orders", "nativeQueryRef": "Duration Eligible Orders"}
+        ]}
+      }
+    },
+    "objects": {
+      "title": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "titleText": {"expr": {"Literal": {"Value": "'Monthly delivery performance (snapshot summary)'"}}}}}],
+      "legend": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "position": {"expr": {"Literal": {"Value": "'Bottom'"}}}}}],
+      "dataPoint": [
+        {"properties": {"fill": {"solid": {"color": {"expr": {"Literal": {"Value": "'#18866A'"}}}}}}, "selector": {"metadata": "Monthly Delivery.On-Time Rate"}},
+        {"properties": {"fill": {"solid": {"color": {"expr": {"Literal": {"Value": "'#D85858'"}}}}}}, "selector": {"metadata": "Monthly Delivery.Late Rate"}}
+      ]
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "c0000000000000000003",
+  "position": {"x": 560, "y": 20, "z": 3, "height": 163.33333333333334, "width": 250, "tabOrder": 3},
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {"queryState": {"Data": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "Average Review Score"}}, "queryRef": "order_delivery.Average Review Score", "nativeQueryRef": "Average Review Score"}]}}}
+  }
+}

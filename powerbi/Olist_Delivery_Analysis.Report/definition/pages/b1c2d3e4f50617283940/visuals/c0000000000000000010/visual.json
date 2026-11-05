@@ -1,0 +1,19 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "c0000000000000000010",
+  "position": {"x": 20, "y": 220, "z": 10, "height": 360, "width": 900, "tabOrder": 10},
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {"projections": [{"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Review Delivery"}}, "Property": "review_score"}}, "queryRef": "Review Delivery.review_score", "nativeQueryRef": "review_score"}]},
+        "Series": {"projections": [{"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Review Delivery"}}, "Property": "delivery_class"}}, "queryRef": "Review Delivery.delivery_class", "nativeQueryRef": "delivery_class"}]},
+        "Y": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "Review Delivery"}}, "Property": "Review Count"}}, "queryRef": "Review Delivery.Review Count", "nativeQueryRef": "Review Count"}]}
+      }
+    },
+    "objects": {
+      "title": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "titleText": {"expr": {"Literal": {"Value": "'Review-score distribution by delivery class'"}}}}}],
+      "dataPoint": [{"properties": {"fill": {"solid": {"color": {"expr": {"Literal": {"Value": "'#5B8DEF'"}}}}}}}]
+    }
+  }
+}

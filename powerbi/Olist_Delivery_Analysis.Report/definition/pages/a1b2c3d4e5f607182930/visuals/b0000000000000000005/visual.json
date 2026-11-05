@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "b0000000000000000005",
+  "position": {"x": 20, "y": 930, "z": 5, "height": 90, "width": 350, "tabOrder": 5},
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {"queryState": {"Data": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "Minimum Group Size"}}, "queryRef": "order_delivery.Minimum Group Size", "nativeQueryRef": "Minimum Group Size"}]}}},
+    "objects": {
+      "title": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "titleText": {"expr": {"Literal": {"Value": "'Minimum comparison group size'"}}}}}]
+    }
+  }
+}

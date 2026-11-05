@@ -1,0 +1,137 @@
+table 'Monthly Delivery'
+	lineageTag: 3e4a1f04-7a01-4f21-a001-000000000001
+
+	measure 'Eligible Orders' =
+			SUM('Monthly Delivery'[eligible_order_count])
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000017
+
+	measure 'On-Time Rate' =
+			DIVIDE(
+				SUM('Monthly Delivery'[on_time_order_count]),
+				SUM('Monthly Delivery'[eligible_order_count])
+			)
+		formatString: 0.00%
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000018
+
+	measure 'Late Rate' =
+			DIVIDE(
+				SUM('Monthly Delivery'[late_order_count]),
+				SUM('Monthly Delivery'[eligible_order_count])
+			)
+		formatString: 0.00%
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000019
+
+	measure 'Delivery Status Excluded Orders' =
+			SUM('Monthly Delivery'[delivery_status_excluded_order_count])
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000020
+
+	measure 'Duration Eligible Orders' =
+			SUM('Monthly Delivery'[duration_eligible_order_count])
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000021
+
+	column purchase_month
+		dataType: dateTime
+		formatString: MMM yyyy
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000002
+		summarizeBy: none
+		sourceColumn: purchase_month
+
+	column source_order_count
+		dataType: int64
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000003
+		sourceColumn: source_order_count
+
+	column delivered_order_count
+		dataType: int64
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000004
+		sourceColumn: delivered_order_count
+
+	column eligible_order_count
+		dataType: int64
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000005
+		sourceColumn: eligible_order_count
+
+	column delivery_status_excluded_order_count
+		dataType: int64
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000006
+		sourceColumn: delivery_status_excluded_order_count
+
+	column on_time_order_count
+		dataType: int64
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000007
+		sourceColumn: on_time_order_count
+
+	column late_order_count
+		dataType: int64
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000008
+		sourceColumn: late_order_count
+
+	column on_time_delivery_rate
+		dataType: double
+		formatString: 0.00%
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000009
+		sourceColumn: on_time_delivery_rate
+
+	column late_delivery_rate
+		dataType: double
+		formatString: 0.00%
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000010
+		sourceColumn: late_delivery_rate
+
+	column duration_eligible_order_count
+		dataType: int64
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000011
+		sourceColumn: duration_eligible_order_count
+
+	column duration_excluded_order_count
+		dataType: int64
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000012
+		sourceColumn: duration_excluded_order_count
+
+	column average_delivery_hours
+		dataType: double
+		formatString: 0.00
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000013
+		sourceColumn: average_delivery_hours
+
+	column median_delivery_hours
+		dataType: double
+		formatString: 0.00
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000014
+		sourceColumn: median_delivery_hours
+
+	column p90_delivery_hours
+		dataType: double
+		formatString: 0.00
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000015
+		sourceColumn: p90_delivery_hours
+
+	column p95_delivery_hours
+		dataType: double
+		formatString: 0.00
+		lineageTag: 3e4a1f04-7a01-4f21-a001-000000000016
+		sourceColumn: p95_delivery_hours
+
+	partition monthly_delivery = m
+		mode: import
+		source =
+				let
+					Source = Csv.Document(File.Contents("F:\olist-delivery-performance-analysis\reports\exports\olist_snapshot_1\monthly_delivery.csv"),[Delimiter=",", Columns=15, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+					#"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+					#"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"purchase_month", type date}, {"source_order_count", Int64.Type}, {"delivered_order_count", Int64.Type}, {"eligible_order_count", Int64.Type}, {"delivery_status_excluded_order_count", Int64.Type}, {"on_time_order_count", Int64.Type}, {"late_order_count", Int64.Type}, {"on_time_delivery_rate", type number}, {"late_delivery_rate", type number}, {"duration_eligible_order_count", Int64.Type}, {"duration_excluded_order_count", Int64.Type}, {"average_delivery_hours", type number}, {"median_delivery_hours", type number}, {"p90_delivery_hours", type number}, {"p95_delivery_hours", type number}})
+				in
+					#"Changed Type"
+
+	annotation PBI_NavigationStepName = Navigation
+	annotation PBI_ResultType = Table

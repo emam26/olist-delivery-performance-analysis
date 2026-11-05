@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "b0000000000000000001",
+  "position": {"x": 20, "y": 20, "z": 1, "height": 430, "width": 900, "tabOrder": 1},
+  "visual": {
+    "visualType": "clusteredBarChart",
+    "query": {
+      "queryState": {
+        "Category": {"projections": [{"field": {"Column": {"Expression": {"SourceRef": {"Entity": "State Delivery"}}, "Property": "customer_state"}}, "queryRef": "State Delivery.customer_state", "nativeQueryRef": "customer_state"}]},
+        "Y": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "State Delivery"}}, "Property": "Late Rate (Min Eligible 30)"}}, "queryRef": "State Delivery.Late Rate (Min Eligible 30)", "nativeQueryRef": "Late Rate (Min Eligible 30)"}]}
+      }
+    },
+    "objects": {
+      "title": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "titleText": {"expr": {"Literal": {"Value": "'Late delivery rate by state (eligible orders >= 30)'"}}}}}],
+      "dataPoint": [{"properties": {"fill": {"solid": {"color": {"expr": {"Literal": {"Value": "'#B42318'"}}}}}}}]
+    }
+  }
+}

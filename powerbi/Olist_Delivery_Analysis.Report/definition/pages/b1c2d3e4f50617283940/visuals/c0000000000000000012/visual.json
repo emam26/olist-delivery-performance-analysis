@@ -1,0 +1,20 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "c0000000000000000012",
+  "position": {"x": 20, "y": 620, "z": 12, "height": 300, "width": 900, "tabOrder": 12},
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {"projections": [
+          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Category Delivery"}}, "Property": "product_category_name"}}, "queryRef": "Category Delivery.product_category_name", "nativeQueryRef": "product_category_name"},
+          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Category Delivery"}}, "Property": "eligible_order_count"}}, "queryRef": "Category Delivery.eligible_order_count", "nativeQueryRef": "eligible_order_count"},
+          {"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "Category Delivery"}}, "Property": "Late Rate (Min Eligible 30)"}}, "queryRef": "Category Delivery.Late Rate (Min Eligible 30)", "nativeQueryRef": "Late Rate (Min Eligible 30)"}
+        ]}
+      }
+    },
+    "objects": {
+      "title": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "titleText": {"expr": {"Literal": {"Value": "'Category delivery summary (eligible orders >= 30)'"}}}}}]
+    }
+  }
+}

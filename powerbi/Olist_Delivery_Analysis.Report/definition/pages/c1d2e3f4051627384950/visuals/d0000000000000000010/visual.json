@@ -1,0 +1,19 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "d0000000000000000010",
+  "position": {"x": 20, "y": 220, "z": 10, "height": 360, "width": 1830, "tabOrder": 10},
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {"projections": [
+          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Data Quality"}}, "Property": "check_id"}}, "queryRef": "Data Quality.check_id", "nativeQueryRef": "check_id"},
+          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Data Quality"}}, "Property": "check_status"}}, "queryRef": "Data Quality.check_status", "nativeQueryRef": "check_status"},
+          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Data Quality"}}, "Property": "observed_value"}}, "queryRef": "Data Quality.observed_value", "nativeQueryRef": "observed_value"},
+          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Data Quality"}}, "Property": "expected_value"}}, "queryRef": "Data Quality.expected_value", "nativeQueryRef": "expected_value"},
+          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Data Quality"}}, "Property": "message"}}, "queryRef": "Data Quality.message", "nativeQueryRef": "message"}
+        ]}
+      }
+    }
+  }
+}

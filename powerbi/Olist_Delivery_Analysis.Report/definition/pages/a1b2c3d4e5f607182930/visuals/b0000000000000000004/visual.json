@@ -1,0 +1,21 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "b0000000000000000004",
+  "position": {"x": 950, "y": 490, "z": 4, "height": 420, "width": 930, "tabOrder": 4},
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {"projections": [
+          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "State Delivery"}}, "Property": "customer_state"}}, "queryRef": "State Delivery.customer_state", "nativeQueryRef": "customer_state"},
+          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "State Delivery"}}, "Property": "eligible_order_count"}}, "queryRef": "State Delivery.eligible_order_count", "nativeQueryRef": "eligible_order_count"},
+          {"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "State Delivery"}}, "Property": "Late Rate (Min Eligible 30)"}}, "queryRef": "State Delivery.Late Rate (Min Eligible 30)", "nativeQueryRef": "Late Rate (Min Eligible 30)"},
+          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "State Delivery"}}, "Property": "median_delivery_hours"}}, "queryRef": "State Delivery.median_delivery_hours", "nativeQueryRef": "median_delivery_hours"}
+        ]}
+      }
+    },
+    "objects": {
+      "title": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "titleText": {"expr": {"Literal": {"Value": "'State delivery summary'"}}}}}]
+    }
+  }
+}

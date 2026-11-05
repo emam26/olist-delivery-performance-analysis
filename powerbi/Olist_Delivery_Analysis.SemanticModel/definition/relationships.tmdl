@@ -1,0 +1,4 @@
+relationship 68c9a494-be43-4f98-8d2f-9867f3e29c82
+	joinOnDateBehavior: datePartOnly
+	fromColumn: order_delivery.purchase_month
+	toColumn: LocalDateTable_77e388ed-6d0f-4a11-9481-8cf4bc859478.Date

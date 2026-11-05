@@ -1,0 +1,10 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "a0000000000000000006",
+  "position": {"x": 1640, "y": 110, "z": 6, "height": 120, "width": 240, "tabOrder": 6},
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {"queryState": {"Data": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "P90 Delivery Days"}}, "queryRef": "order_delivery.P90 Delivery Days", "nativeQueryRef": "P90 Delivery Days"}]}}},
+    "objects": {"value": [{"properties": {"labelDisplayUnits": {"expr": {"Literal": {"Value": "1D"}}}, "labelPrecision": {"expr": {"Literal": {"Value": "2L"}}}}, "selector": {"metadata": "order_delivery.P90 Delivery Days"}}]}
+  }
+}

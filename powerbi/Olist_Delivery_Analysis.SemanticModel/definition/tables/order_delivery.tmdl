@@ -1,0 +1,285 @@
+table order_delivery
+	lineageTag: 5c90162c-8fb9-4e61-beb9-3fae0c69fc6c
+
+	measure 'Total Orders' =
+
+			COUNTROWS('order_delivery')
+		formatString: #,0
+		lineageTag: f4d5e0b1-b684-4e59-a9aa-e2185191267f
+
+	measure 'Delivered Orders' =
+			CALCULATE([Total Orders], 'order_delivery'[is_delivered] = TRUE())
+		formatString: #,0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000001
+
+	measure 'Delivery Eligible Orders' =
+			CALCULATE([Total Orders], 'order_delivery'[is_delivery_eligible] = TRUE())
+		formatString: #,0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000002
+
+	measure 'On-Time Orders' =
+			CALCULATE(
+				[Total Orders],
+				'order_delivery'[is_delivery_eligible] = TRUE(),
+				'order_delivery'[is_late] = FALSE()
+			)
+		formatString: #,0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000003
+
+	measure 'Late Orders' =
+			CALCULATE(
+				[Total Orders],
+				'order_delivery'[is_delivery_eligible] = TRUE(),
+				'order_delivery'[is_late] = TRUE()
+			)
+		formatString: #,0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000004
+
+	measure 'On-Time Rate' =
+			DIVIDE([On-Time Orders], [Delivery Eligible Orders])
+		formatString: 0.00%
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000005
+
+	measure 'Late Rate' =
+			DIVIDE([Late Orders], [Delivery Eligible Orders])
+		formatString: 0.00%
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000006
+
+	measure 'Delivery Status Excluded Orders' =
+			[Total Orders] - [Delivery Eligible Orders]
+		formatString: #,0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000007
+
+	measure 'Duration Eligible Orders' =
+			CALCULATE([Total Orders], 'order_delivery'[is_duration_eligible] = TRUE())
+		formatString: #,0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000008
+
+	measure 'Duration Excluded Orders' =
+			[Total Orders] - [Duration Eligible Orders]
+		formatString: #,0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000009
+
+	measure 'Average Delivery Days' =
+			CALCULATE(
+				DIVIDE(AVERAGE('order_delivery'[delivery_duration_hours]), 24),
+				'order_delivery'[is_duration_eligible] = TRUE()
+			)
+		formatString: 0.00
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000010
+
+	measure 'Median Delivery Days' =
+			CALCULATE(
+				PERCENTILEX.INC(
+					'order_delivery',
+					DIVIDE('order_delivery'[delivery_duration_hours], 24),
+					0.5
+				),
+				'order_delivery'[is_duration_eligible] = TRUE()
+			)
+		formatString: 0.00
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000011
+
+	measure 'P90 Delivery Days' =
+			CALCULATE(
+				PERCENTILEX.INC(
+					'order_delivery',
+					DIVIDE('order_delivery'[delivery_duration_hours], 24),
+					0.9
+				),
+				'order_delivery'[is_duration_eligible] = TRUE()
+			)
+		formatString: 0.00
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000012
+
+	measure 'P95 Delivery Days' =
+			CALCULATE(
+				PERCENTILEX.INC(
+					'order_delivery',
+					DIVIDE('order_delivery'[delivery_duration_hours], 24),
+					0.95
+				),
+				'order_delivery'[is_duration_eligible] = TRUE()
+			)
+		formatString: 0.00
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000013
+
+	measure 'Average Days Late' =
+			CALCULATE(
+				AVERAGE('order_delivery'[days_late]),
+				'order_delivery'[is_delivery_eligible] = TRUE(),
+				'order_delivery'[is_late] = TRUE()
+			)
+		formatString: 0.0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000014
+
+	measure 'Reviewed Orders' =
+			CALCULATE(
+				[Total Orders],
+				NOT ISBLANK('order_delivery'[selected_review_score])
+			)
+		formatString: #,0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000015
+
+	measure 'Orders Without Usable Review' =
+			[Total Orders] - [Reviewed Orders]
+		formatString: #,0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000016
+
+	measure 'Average Review Score' =
+			CALCULATE(
+				AVERAGE('order_delivery'[selected_review_score]),
+				NOT ISBLANK('order_delivery'[selected_review_score])
+			)
+		formatString: 0.0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000017
+
+	measure 'Minimum Group Size' = 30
+		formatString: #,0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000018
+
+	measure 'Review Page Title' =
+			"Delivery timing and review score - descriptive association"
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000019
+
+	column order_id
+		dataType: string
+		lineageTag: 8fc25961-beb8-42d2-92e0-0864d8fe2d4c
+		summarizeBy: none
+		sourceColumn: order_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_state
+		dataType: string
+		lineageTag: 950ea2d5-a8e2-421e-9bb3-bfac7fb10de0
+		summarizeBy: none
+		sourceColumn: customer_state
+
+		annotation SummarizationSetBy = Automatic
+
+	column purchase_month
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 03d0fe44-3b26-4915-9a5e-86379f5fcbd5
+		summarizeBy: none
+		sourceColumn: purchase_month
+
+		variation Variation
+			isDefault
+			relationship: 68c9a494-be43-4f98-8d2f-9867f3e29c82
+			defaultHierarchy: LocalDateTable_77e388ed-6d0f-4a11-9481-8cf4bc859478.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column order_status
+		dataType: string
+		lineageTag: 1adfd5ae-4758-492a-9a9d-31caf6813ee5
+		summarizeBy: none
+		sourceColumn: order_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_delivered
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: a5f95f2b-1316-489d-8bc7-79f7719a851e
+		summarizeBy: none
+		sourceColumn: is_delivered
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_delivery_eligible
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 7ac9448a-69aa-4888-8a8a-6eb49d37f649
+		summarizeBy: none
+		sourceColumn: is_delivery_eligible
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_late
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 4cd418c1-f17e-4b94-be31-ae211f77ec04
+		summarizeBy: none
+		sourceColumn: is_late
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_duration_eligible
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: c5fda70e-d6fa-4bfd-91c7-8e6645412927
+		summarizeBy: none
+		sourceColumn: is_duration_eligible
+
+		annotation SummarizationSetBy = Automatic
+
+	column delivery_duration_hours
+		dataType: double
+		lineageTag: bc25c029-92c6-4d74-b75d-b100bf2f708f
+		summarizeBy: sum
+		sourceColumn: delivery_duration_hours
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column days_late
+		dataType: int64
+		formatString: 0
+		lineageTag: 7847d15e-9aba-41a7-88a9-ca7ff5d1a345
+		summarizeBy: sum
+		sourceColumn: days_late
+
+		annotation SummarizationSetBy = Automatic
+
+	column selected_review_score
+		dataType: int64
+		formatString: 0
+		lineageTag: de74c08e-f406-4ceb-8201-e92a7dbf7fd9
+		summarizeBy: sum
+		sourceColumn: selected_review_score
+
+		annotation SummarizationSetBy = Automatic
+
+	column delivery_exclusion_reason
+		dataType: string
+		lineageTag: 5a9450b0-fb5d-4d2d-b85f-2b2cf94c829b
+		summarizeBy: none
+		sourceColumn: delivery_exclusion_reason
+
+		annotation SummarizationSetBy = Automatic
+
+	column duration_exclusion_reason
+		dataType: string
+		lineageTag: 9346557c-7962-4b6e-92d5-b75c86f9457b
+		summarizeBy: none
+		sourceColumn: duration_exclusion_reason
+
+		annotation SummarizationSetBy = Automatic
+
+	column exclusion_reason
+		dataType: string
+		lineageTag: f968a731-00f7-4d8f-a8bb-fdd5de0eb446
+		summarizeBy: none
+		sourceColumn: exclusion_reason
+
+		annotation SummarizationSetBy = Automatic
+
+	partition order_delivery = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("F:\olist-delivery-performance-analysis\reports\exports\olist_snapshot_1\order_delivery.csv"),[Delimiter=",", Columns=14, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"order_id", type text}, {"customer_state", type text}, {"purchase_month", type date}, {"order_status", type text}, {"is_delivered", type logical}, {"is_delivery_eligible", type logical}, {"is_late", type logical}, {"is_duration_eligible", type logical}, {"delivery_duration_hours", type number}, {"days_late", Int64.Type}, {"selected_review_score", Int64.Type}, {"delivery_exclusion_reason", type text}, {"duration_exclusion_reason", type text}, {"exclusion_reason", type text}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
