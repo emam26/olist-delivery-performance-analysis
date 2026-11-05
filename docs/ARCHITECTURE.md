@@ -4,8 +4,10 @@
 
 The project creates a reproducible, descriptive analysis of delivery performance in
 the public Olist e-commerce dataset. It does not operate an Olist production system,
-predict future deliveries, or identify causal effects. Newly implemented components
-remain **NOT VERIFIED** until the manual runbook produces recorded evidence.
+predict future deliveries, or identify causal effects. Snapshot-specific evidence is
+recorded in `docs/ANALYSIS_FINDINGS.md`; every new source, model, or visual change
+still requires the relevant manual-runbook verification before it is treated as
+observed runtime evidence.
 
 ## Data flow
 

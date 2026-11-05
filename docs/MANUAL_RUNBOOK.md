@@ -6,8 +6,8 @@ continue into SQL loading or dashboard work until the earlier gate is satisfied.
 
 ## Local conventions
 
-- WSL project directory: `/mnt/f/olist-delivery-performance-analysis`
-- Windows project directory: `F:\olist-delivery-performance-analysis`
+- Project directory: the operator's confirmed local checkout, represented below as
+  `<project-root>`
 - SQL target database: `OlistDeliveryAnalytics`
 - Generated inventory: `reports/inventory/`
 - Generated validation/export artifacts: `reports/`
@@ -23,7 +23,7 @@ its absolute path. Never guess a SQL host, login, or password.
 Where: WSL Bash.
 
 ```bash
-cd /mnt/f/olist-delivery-performance-analysis
+cd <project-root>
 pwd
 find . -maxdepth 2 -type f | sort
 ```
@@ -303,11 +303,13 @@ Action:
    96,470 eligible orders, 93.23% on-time rate, 6,534 late orders, and 12.56,
    10.22, and 23.10 days for average, median, and P90 delivery duration.
 4. Import `powerbi/Olist_Delivery_Theme.json` if the light-canvas, navy, blue,
-   green, amber, and red theme is not already applied. The native page tabs are the
-   checked-in navigation. To add persistent navigation, use **Insert > Buttons >
-   Navigator > Page navigator**, format it with the theme, copy it to every page,
-   and test all four destinations. Confirm the review-distribution legend maps
-   **Late** to red and **On Time** to green after theme application.
+   green, amber, and red theme is not already applied. Navigation and clear-slicer
+   controls are not a verified project capability: earlier source-authored
+   candidates failed runtime testing and are not checked in. If needed, create and
+   test a native **Page navigator** and **Clear all slicers** button on Overview,
+   save, and close Desktop before asking Codex to inspect and replicate the
+   generated PBIR definitions. Confirm the review-distribution legend maps **Late**
+   to red and **On Time** to green after theme application.
 5. Verify that the state, seller, and category comparison measures suppress groups
    below `eligible_order_count >= 30`. If a visual has been rebuilt from raw summary
    columns, apply that threshold directly to the corresponding disconnected table;
@@ -323,14 +325,22 @@ Action:
    category slicer affects only category visuals. Check chart titles, descending
    late-rate sorting, percentage denominators, null display, review-score class
    behavior, Late/red and On Time/green colors, and the non-additive seller/category
-   disclaimers. Confirm State Median Delivery Hours is blank on the total row and
-   all Category Detail totals are blank rather than presented as global values.
-8. If a reset action is needed, make one page-specific default bookmark at a time:
+   disclaimers. The operator has verified that the State Detail and Category Detail
+   Total rows show the global order-level
+   benchmark (96,470 eligible orders, 6.77% late rate, about 245.23 median hours)
+   and Category Detail shows 96,470 eligible orders, 6,534 late orders, and 6.77%
+   late rate. Reconfirm after any model or source change. These Total values must
+   not change when a disconnected local slicer
+   changes visible state, seller, or category rows.
+8. After native controls have been generated and inspected, test **Clear all
+   slicers** on Overview after making local slicer selections. It must clear only
+   current-page slicer selections; it does not clear Filters-pane filters or undo
+   chart selections. Data Quality has no slicer and needs no clearing control. If a
+   full reset is still needed, make one page-specific default bookmark at a time:
    clear that page's intended slicers; in **View > Bookmarks**, add a bookmark with
    **Data** and **Current page** enabled and **All visuals** selected; then add a
    blank button and set **Format visual > Action** to that page's bookmark. Test it
-   after selecting every local slicer. It must restore only the intended page state;
-   do not hand-edit action-button JSON or use one bookmark across disconnected
+   after selecting every local slicer. Do not use one bookmark across disconnected
    summary-table scopes.
 9. Follow `powerbi/README.md`, `data_model.md`, `measures.dax`, and
    `dashboard_specification.md`, then complete every item in `reconciliation.md`.
@@ -342,7 +352,7 @@ checking that they contain no credentials or private local paths.
 
 ## Phase E - findings and version control
 
-Populate `docs/FINDINGS.md` only from reconciled outputs. Update
+Populate `docs/ANALYSIS_FINDINGS.md` only from reconciled outputs. Update
 `docs/IMPLEMENTATION_STATUS.md` with supplied execution evidence and limitations.
 The operator, not Codex, decides when to commit and push. Never commit `.env`, raw
 CSV files, generated inventory/validation/export artifacts, database files, or
