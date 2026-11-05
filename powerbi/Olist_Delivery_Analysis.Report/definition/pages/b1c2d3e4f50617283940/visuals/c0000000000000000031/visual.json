@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Review outcomes use the selected-review, delivery-eligible cohort. Category comparisons are disconnected and non-additive; the category slicer affects category visuals only.",
+                    "value": "Review outcomes use the selected-review, delivery-eligible cohort. Category rows can overlap; the Total row is the global distinct-order benchmark, not a sum of categories.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10pt",

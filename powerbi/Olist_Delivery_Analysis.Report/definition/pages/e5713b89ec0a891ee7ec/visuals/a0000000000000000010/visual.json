@@ -113,26 +113,6 @@
       }
     },
     "objects": {
-      "title": [
-        {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "text": {
-              "expr": {
-                "Literal": {
-                  "Value": "'Monthly On-Time vs Late Rate'"
-                }
-              }
-            }
-          }
-        }
-      ],
       "legend": [
         {
           "properties": {

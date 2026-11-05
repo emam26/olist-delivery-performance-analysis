@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "State and seller summaries are disconnected and non-additive. Rates display only groups with at least 30 eligible orders; each local slicer affects its matching visuals.",
+                    "value": "State and seller summaries are disconnected from the order table. Seller attribution is non-additive; Total rows use order-level global benchmarks and rates require 30 eligible orders.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10pt",

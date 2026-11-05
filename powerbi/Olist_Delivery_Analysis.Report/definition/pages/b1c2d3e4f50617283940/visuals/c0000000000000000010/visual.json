@@ -71,26 +71,6 @@
       }
     },
     "objects": {
-      "title": [
-        {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "text": {
-              "expr": {
-                "Literal": {
-                  "Value": "'Review Score by Delivery Outcome'"
-                }
-              }
-            }
-          }
-        }
-      ],
       "legend": [
         {
           "properties": {

@@ -51,6 +51,20 @@
                       "Entity": "Category Delivery"
                     }
                   },
+                  "Property": "Category Late Orders"
+                }
+              },
+              "queryRef": "Category Delivery.Category Late Orders",
+              "nativeQueryRef": "Category Late Orders"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Category Delivery"
+                    }
+                  },
                   "Property": "Category Late Rate (Min Eligible 30)"
                 }
               },
@@ -59,6 +73,29 @@
             }
           ]
         }
+      }
+    },
+    "objects": {
+        "title": [
+          {
+            "properties": {
+              "show": {
+                "expr": {
+                  "Literal": {
+                    "Value": "true"
+                  }
+                }
+              },
+              "text": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'Category Detail: Global Total Benchmark'"
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     }
   }

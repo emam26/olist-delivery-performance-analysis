@@ -1,7 +1,12 @@
 table 'Seller Delivery'
 	lineageTag: 3e4a1f04-7a01-4f21-a003-000000000001
 
-	measure 'Seller Eligible Orders' = SUM('Seller Delivery'[eligible_order_count])
+	measure 'Seller Eligible Orders' =
+			IF(
+				ISINSCOPE('Seller Delivery'[seller_id]),
+				SUM('Seller Delivery'[eligible_order_count]),
+				[Delivery Eligible Orders]
+			)
 		formatString: #,0
 		lineageTag: 3e4a1f04-7a01-4f21-a003-000000000017
 
@@ -9,8 +14,12 @@ table 'Seller Delivery'
 			VAR Eligible = SUM('Seller Delivery'[eligible_order_count])
 			RETURN
 				IF(
-					Eligible >= [Minimum Group Size],
-					DIVIDE(SUM('Seller Delivery'[on_time_order_count]), Eligible)
+					ISINSCOPE('Seller Delivery'[seller_id]),
+					IF(
+						Eligible >= [Minimum Group Size],
+						DIVIDE(SUM('Seller Delivery'[on_time_order_count]), Eligible)
+					),
+					[On-Time Rate]
 				)
 		formatString: 0.00%
 		lineageTag: 3e4a1f04-7a01-4f21-a003-000000000018
@@ -19,8 +28,12 @@ table 'Seller Delivery'
 			VAR Eligible = SUM('Seller Delivery'[eligible_order_count])
 			RETURN
 				IF(
-					Eligible >= [Minimum Group Size],
-					DIVIDE(SUM('Seller Delivery'[late_order_count]), Eligible)
+					ISINSCOPE('Seller Delivery'[seller_id]),
+					IF(
+						Eligible >= [Minimum Group Size],
+						DIVIDE(SUM('Seller Delivery'[late_order_count]), Eligible)
+					),
+					[Late Rate]
 				)
 		formatString: 0.00%
 		lineageTag: 3e4a1f04-7a01-4f21-a003-000000000019

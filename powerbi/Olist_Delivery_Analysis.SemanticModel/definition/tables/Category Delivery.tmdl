@@ -4,18 +4,31 @@ table 'Category Delivery'
 	measure 'Category Eligible Orders' =
 			IF(
 				ISINSCOPE('Category Delivery'[product_category_name]),
-				SUM('Category Delivery'[eligible_order_count])
+				SUM('Category Delivery'[eligible_order_count]),
+				[Delivery Eligible Orders]
 			)
 		formatString: #,0
 		lineageTag: 3e4a1f04-7a01-4f21-a004-000000000017
+
+	measure 'Category Late Orders' =
+			IF(
+				ISINSCOPE('Category Delivery'[product_category_name]),
+				SUM('Category Delivery'[late_order_count]),
+				[Late Orders]
+			)
+		formatString: #,0
+		lineageTag: 3e4a1f04-7a01-4f21-a004-000000000020
 
 	measure 'Category On-Time Rate (Min Eligible 30)' =
 			VAR Eligible = SUM('Category Delivery'[eligible_order_count])
 			RETURN
 				IF(
-					ISINSCOPE('Category Delivery'[product_category_name])
-						&& Eligible >= [Minimum Group Size],
-					DIVIDE(SUM('Category Delivery'[on_time_order_count]), Eligible)
+					ISINSCOPE('Category Delivery'[product_category_name]),
+					IF(
+						Eligible >= [Minimum Group Size],
+						DIVIDE(SUM('Category Delivery'[on_time_order_count]), Eligible)
+					),
+					[On-Time Rate]
 				)
 		formatString: 0.00%
 		lineageTag: 3e4a1f04-7a01-4f21-a004-000000000018
@@ -24,9 +37,12 @@ table 'Category Delivery'
 			VAR Eligible = SUM('Category Delivery'[eligible_order_count])
 			RETURN
 				IF(
-					ISINSCOPE('Category Delivery'[product_category_name])
-						&& Eligible >= [Minimum Group Size],
-					DIVIDE(SUM('Category Delivery'[late_order_count]), Eligible)
+					ISINSCOPE('Category Delivery'[product_category_name]),
+					IF(
+						Eligible >= [Minimum Group Size],
+						DIVIDE(SUM('Category Delivery'[late_order_count]), Eligible)
+					),
+					[Late Rate]
 				)
 		formatString: 0.00%
 		lineageTag: 3e4a1f04-7a01-4f21-a004-000000000019

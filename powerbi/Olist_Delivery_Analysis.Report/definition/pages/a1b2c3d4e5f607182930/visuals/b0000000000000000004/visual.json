@@ -31,17 +31,17 @@
             },
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
                       "Entity": "State Delivery"
                     }
                   },
-                  "Property": "eligible_order_count"
+                  "Property": "State Eligible Orders"
                 }
               },
-              "queryRef": "State Delivery.eligible_order_count",
-              "nativeQueryRef": "eligible_order_count"
+              "queryRef": "State Delivery.State Eligible Orders",
+              "nativeQueryRef": "State Eligible Orders"
             },
             {
               "field": {
@@ -73,6 +73,29 @@
             }
           ]
         }
+      }
+    },
+    "objects": {
+        "title": [
+          {
+            "properties": {
+              "show": {
+                "expr": {
+                  "Literal": {
+                    "Value": "true"
+                  }
+                }
+              },
+              "text": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'State Detail: Global Total Benchmark'"
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     }
   }

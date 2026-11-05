@@ -124,9 +124,11 @@ Orders Without Usable Review =
 
 Minimum Group Size = 30
 
-// Reporting-table measures use additive order counts for denominators.
-// Seller, category, and regional comparison rates stay blank below the
-// documented minimum eligible-group size.
+// Reporting-table measures use their group's eligible-order denominator in row
+// scope. At an ungrouped total, state, seller, and category measures switch to
+// the corresponding order_delivery measure so attributed summary rows are never
+// summed or averaged into a global benchmark. Comparison rates stay blank below
+// the documented minimum eligible-group size.
 
 Monthly Eligible Orders =
 SUM('Monthly Delivery'[eligible_order_count])
@@ -150,74 +152,115 @@ Monthly Duration Eligible Orders =
 SUM('Monthly Delivery'[duration_eligible_order_count])
 
 State Eligible Orders =
-SUM('State Delivery'[eligible_order_count])
+IF(
+    ISINSCOPE('State Delivery'[customer_state]),
+    SUM('State Delivery'[eligible_order_count]),
+    [Delivery Eligible Orders]
+)
 
 State On-Time Rate (Min Eligible 30) =
 VAR Eligible = SUM('State Delivery'[eligible_order_count])
 RETURN
     IF(
-        Eligible >= [Minimum Group Size],
-        DIVIDE(SUM('State Delivery'[on_time_order_count]), Eligible)
+        ISINSCOPE('State Delivery'[customer_state]),
+        IF(
+            Eligible >= [Minimum Group Size],
+            DIVIDE(SUM('State Delivery'[on_time_order_count]), Eligible)
+        ),
+        [On-Time Rate]
     )
 
 State Late Rate (Min Eligible 30) =
 VAR Eligible = SUM('State Delivery'[eligible_order_count])
 RETURN
     IF(
-        Eligible >= [Minimum Group Size],
-        DIVIDE(SUM('State Delivery'[late_order_count]), Eligible)
+        ISINSCOPE('State Delivery'[customer_state]),
+        IF(
+            Eligible >= [Minimum Group Size],
+            DIVIDE(SUM('State Delivery'[late_order_count]), Eligible)
+        ),
+        [Late Rate]
     )
 
 State Median Delivery Hours (Min Eligible 30) =
 VAR Eligible = SUM('State Delivery'[eligible_order_count])
 RETURN
     IF(
-        ISINSCOPE('State Delivery'[customer_state])
-            && Eligible >= [Minimum Group Size],
-        SELECTEDVALUE('State Delivery'[median_delivery_hours])
+        ISINSCOPE('State Delivery'[customer_state]),
+        IF(
+            Eligible >= [Minimum Group Size],
+            SELECTEDVALUE('State Delivery'[median_delivery_hours])
+        ),
+        [Median Delivery Days] * 24
     )
 
 Seller Eligible Orders =
-SUM('Seller Delivery'[eligible_order_count])
+IF(
+    ISINSCOPE('Seller Delivery'[seller_id]),
+    SUM('Seller Delivery'[eligible_order_count]),
+    [Delivery Eligible Orders]
+)
 
 Seller On-Time Rate (Min Eligible 30) =
 VAR Eligible = SUM('Seller Delivery'[eligible_order_count])
 RETURN
     IF(
-        Eligible >= [Minimum Group Size],
-        DIVIDE(SUM('Seller Delivery'[on_time_order_count]), Eligible)
+        ISINSCOPE('Seller Delivery'[seller_id]),
+        IF(
+            Eligible >= [Minimum Group Size],
+            DIVIDE(SUM('Seller Delivery'[on_time_order_count]), Eligible)
+        ),
+        [On-Time Rate]
     )
 
 Seller Late Rate (Min Eligible 30) =
 VAR Eligible = SUM('Seller Delivery'[eligible_order_count])
 RETURN
     IF(
-        Eligible >= [Minimum Group Size],
-        DIVIDE(SUM('Seller Delivery'[late_order_count]), Eligible)
+        ISINSCOPE('Seller Delivery'[seller_id]),
+        IF(
+            Eligible >= [Minimum Group Size],
+            DIVIDE(SUM('Seller Delivery'[late_order_count]), Eligible)
+        ),
+        [Late Rate]
     )
 
 Category Eligible Orders =
 IF(
     ISINSCOPE('Category Delivery'[product_category_name]),
-    SUM('Category Delivery'[eligible_order_count])
+    SUM('Category Delivery'[eligible_order_count]),
+    [Delivery Eligible Orders]
+)
+
+Category Late Orders =
+IF(
+    ISINSCOPE('Category Delivery'[product_category_name]),
+    SUM('Category Delivery'[late_order_count]),
+    [Late Orders]
 )
 
 Category On-Time Rate (Min Eligible 30) =
 VAR Eligible = SUM('Category Delivery'[eligible_order_count])
 RETURN
     IF(
-        ISINSCOPE('Category Delivery'[product_category_name])
-            && Eligible >= [Minimum Group Size],
-        DIVIDE(SUM('Category Delivery'[on_time_order_count]), Eligible)
+        ISINSCOPE('Category Delivery'[product_category_name]),
+        IF(
+            Eligible >= [Minimum Group Size],
+            DIVIDE(SUM('Category Delivery'[on_time_order_count]), Eligible)
+        ),
+        [On-Time Rate]
     )
 
 Category Late Rate (Min Eligible 30) =
 VAR Eligible = SUM('Category Delivery'[eligible_order_count])
 RETURN
     IF(
-        ISINSCOPE('Category Delivery'[product_category_name])
-            && Eligible >= [Minimum Group Size],
-        DIVIDE(SUM('Category Delivery'[late_order_count]), Eligible)
+        ISINSCOPE('Category Delivery'[product_category_name]),
+        IF(
+            Eligible >= [Minimum Group Size],
+            DIVIDE(SUM('Category Delivery'[late_order_count]), Eligible)
+        ),
+        [Late Rate]
     )
 
 Review Count =

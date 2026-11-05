@@ -1,7 +1,12 @@
 table 'State Delivery'
 	lineageTag: 3e4a1f04-7a01-4f21-a002-000000000001
 
-	measure 'State Eligible Orders' = SUM('State Delivery'[eligible_order_count])
+	measure 'State Eligible Orders' =
+			IF(
+				ISINSCOPE('State Delivery'[customer_state]),
+				SUM('State Delivery'[eligible_order_count]),
+				[Delivery Eligible Orders]
+			)
 		formatString: #,0
 		lineageTag: 3e4a1f04-7a01-4f21-a002-000000000017
 
@@ -9,8 +14,12 @@ table 'State Delivery'
 			VAR Eligible = SUM('State Delivery'[eligible_order_count])
 			RETURN
 				IF(
-					Eligible >= [Minimum Group Size],
-					DIVIDE(SUM('State Delivery'[on_time_order_count]), Eligible)
+					ISINSCOPE('State Delivery'[customer_state]),
+					IF(
+						Eligible >= [Minimum Group Size],
+						DIVIDE(SUM('State Delivery'[on_time_order_count]), Eligible)
+					),
+					[On-Time Rate]
 				)
 		formatString: 0.00%
 		lineageTag: 3e4a1f04-7a01-4f21-a002-000000000018
@@ -19,8 +28,12 @@ table 'State Delivery'
 			VAR Eligible = SUM('State Delivery'[eligible_order_count])
 			RETURN
 				IF(
-					Eligible >= [Minimum Group Size],
-					DIVIDE(SUM('State Delivery'[late_order_count]), Eligible)
+					ISINSCOPE('State Delivery'[customer_state]),
+					IF(
+						Eligible >= [Minimum Group Size],
+						DIVIDE(SUM('State Delivery'[late_order_count]), Eligible)
+					),
+					[Late Rate]
 				)
 		formatString: 0.00%
 		lineageTag: 3e4a1f04-7a01-4f21-a002-000000000019
@@ -29,9 +42,12 @@ table 'State Delivery'
 			VAR Eligible = SUM('State Delivery'[eligible_order_count])
 			RETURN
 				IF(
-					ISINSCOPE('State Delivery'[customer_state])
-						&& Eligible >= [Minimum Group Size],
-					SELECTEDVALUE('State Delivery'[median_delivery_hours])
+					ISINSCOPE('State Delivery'[customer_state]),
+					IF(
+						Eligible >= [Minimum Group Size],
+						SELECTEDVALUE('State Delivery'[median_delivery_hours])
+					),
+					[Median Delivery Days] * 24
 				)
 		formatString: 0.00
 		lineageTag: 3e4a1f04-7a01-4f21-a002-000000000020

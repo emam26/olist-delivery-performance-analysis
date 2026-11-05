@@ -61,9 +61,13 @@ match exactly. `on_time_orders + late_orders` must equal eligible orders.
   accidental relationship.
 - Confirm groups below the minimum threshold are excluded from rankings but remain
   available for quality review.
-- Confirm the State Median Delivery Hours total and all Category Detail totals are
-  blank. The global median and global late rate must be read from `order_delivery`
-  KPI measures, never from disconnected summary-table totals.
+- Confirm State Detail and Category Detail Total rows use the explicit global
+  `order_delivery` benchmarks rather than summary-table arithmetic. The operator
+  verified these Snapshot #1 values in Desktop: State Detail showed 96,470 eligible
+  orders, 6.77% late rate, and approximately 245.23 median delivery hours; Category
+  Detail showed 96,470 eligible orders, 6,534 late orders, and 6.77% late rate.
+  Reconfirm after any source/model change. Those values must remain unchanged when a
+  disconnected state, seller, or category slicer changes its local summary rows.
 - Confirm the review legend explicitly maps **Late** to red (`#D85858`) and
   **On Time** to green (`#18866A`).
 - Confirm `orders_without_usable_review` is not summed across review-score rows;
@@ -79,4 +83,7 @@ Publication is permitted only when:
 4. exclusions and non-additive bridge semantics are visible; and
 5. findings are labeled as verified observations rather than causal conclusions.
 
-Until then, the dashboard status is **NOT VERIFIED**.
+Snapshot #1 has operator-supplied Desktop evidence for refresh/render, reconciled
+Overview KPIs, and the State/Category global benchmark totals. This checklist still
+must be repeated after any source, model, or visual change; no unobserved refresh or
+interaction check is implied by that historical evidence.

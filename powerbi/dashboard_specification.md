@@ -32,20 +32,24 @@ The four PBIR page labels are **Overview**, **Regions & Sellers**, **Customer
 Experience**, and **Data Quality**. These labels make native Power BI page tabs a
 usable, supported navigation path.
 
-The checked-in source retains the native page tabs. It has no generated button,
-bookmark, or page-action contract from which to safely derive additional PBIR
-action JSON. For a persistent top navigator, create a built-in **Page navigator**
-in Desktop with **Insert > Buttons > Navigator > Page navigator**, format it with
-the checked-in theme, copy the generated navigator to the other three pages, and
-verify that its only destinations are the four pages above.
+No source-authored page navigator or Clear Slicers action is currently checked in:
+the previous generated candidates opened but did not work at runtime. Native
+Desktop generation is pending. The next supported step is to create and validate a
+Page navigator and a Clear all slicers button on **Overview** in Desktop, save and
+close the report, then inspect the resulting PBIR definitions before reproducing
+the verified controls elsewhere.
 
-Create reset controls in Desktop, not by hand-authoring action JSON. On each page,
-first clear only that page's intended slicers, then add a named default bookmark
-with **Data** and **Current page** enabled and **All visuals** selected. Attach a
-blank button's **Action** to that page's bookmark. Use one bookmark per page so an
-Overview reset cannot imply that it controls disconnected state, seller, category,
-review, quality, or provenance summaries. Test the button after selecting every
-local slicer; it must restore that page's original filter state and nothing else.
+When validated, a **Clear all slicers** button must be described narrowly: it clears
+slicer selections on its current page only. It does not clear the Filters pane,
+undo a chart selection, or reset disconnected tables on another page. Data Quality
+has no slicer and needs no clearing control.
+
+No full-reset bookmarks are checked in. A complete reset needs an intentional,
+page-specific saved state and must not imply that an Overview reset controls
+disconnected state, seller, category, review, quality, or provenance summaries. If
+required, create and validate one Desktop bookmark per page with **Data** and
+**Current page** enabled and **All visuals** selected, then attach a blank button
+to the matching bookmark.
 
 ## Page 1 - Overview
 
@@ -80,9 +84,12 @@ reporting view only after reconciliation.
 - Ranked bar chart: customer state by late-delivery rate.
 - Scatter plot: eligible order count versus median delivery hours; state as detail.
 - Table: state and eligible-order count, with comparison rates and median duration
-  returned only for groups meeting the sample-size threshold. It is a detail view,
-  not an additive roll-up. The median-duration total is intentionally blank because
-  a median of state medians is not the global order-level median.
+  returned only for groups meeting the sample-size threshold. Its Total row is an
+  order-level global benchmark, not an aggregation of state summaries: eligible
+  orders, late/on-time rates, and median hours use `order_delivery` measures. The
+  operator verified the Snapshot #1 values in Desktop: 96,470 eligible orders, a
+  6.77% late rate, and approximately 245.23 median delivery hours. Individual state
+  values remain state-level; recheck the total after any model or source change.
 - Local customer-state slicer: filters only the state bar, scatter, and state table.
 - Local seller-state slicer: filters only the seller comparison. It does not filter
   customer-state visuals or order-level cards.
@@ -119,9 +126,13 @@ applicable group; group rows are not additive to the global order total."
   table. It does not filter review visuals or order-level cards.
 - Persistent subtitle: "Descriptive association; no causal interpretation."
 
-The category detail table intentionally leaves its total values blank. Category
-attribution can repeat an order across categories, so a category-weighted rate or
-count must not be presented as a global order-level total.
+The category detail table's Total row is a clearly labeled order-level benchmark,
+not a category roll-up. Category attribution can repeat an order across categories,
+so category counts and rates are never summed or averaged for that row. Instead it
+uses `order_delivery` measures. The operator verified the Snapshot #1 Total values
+in Desktop as 96,470 eligible orders, 6,534 late orders, and a 6.77% late rate.
+Individual category rows retain their attributed counts and the 30-eligible-order
+rate threshold; recheck the total after any model or source change.
 
 Product quality, service, geography, expectations, and review-selection effects are
 plausible confounders.
@@ -170,8 +181,9 @@ after refresh. If Desktop does not retain the mapping, select the review chart,
 open **Format visual** > **Columns** > **Colors**, turn on **Show all** (or use
 **Apply settings to**), and apply those exact colors.
 
-The project deliberately still does not hand-author navigation or bookmark action
-JSON: there is no existing generated action contract to validate those properties.
-Create and test a page navigator or reset bookmark using the Desktop workflow in
-the Navigation section. Also confirm that the ranked state, seller, and category
-charts sort descending by late rate and set accessible alt text for visual titles.
+Navigation and clear-slicer controls are pending native Desktop creation and runtime
+verification. First create and test them on Overview, save, and close Desktop so
+their actual PBIR definitions can be inspected before any source replication. Also
+confirm that the ranked state, seller, and category charts sort descending by late
+rate and set accessible alt text for visual titles. A full reset remains
+Desktop-only until page-specific bookmarks are deliberately created and verified.
