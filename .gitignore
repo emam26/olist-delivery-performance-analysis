@@ -44,3 +44,11 @@ reports/inventory/*
 Thumbs.db
 .vscode/
 .idea/
+
+# Power BI local state, caches, credentials, and machine-specific deliverables
+**/.pbi/
+**/localSettings.json
+*.pbix
+*.pbit
+*.abf
+**/*credentials*
