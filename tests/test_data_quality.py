@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -61,6 +62,57 @@ def test_metric_reconciliation_uses_absolute_tolerance_only() -> None:
         {"large_metric": 1_000_000_000_000.0},
         {"large_metric": 1_000_000_000_001.0},
         tolerance=1e-4,
+    )
+
+    assert findings[0].status == "Failed"
+
+
+def test_metric_reconciliation_supports_sql_decimal_values_and_nulls() -> None:
+    findings = reconcile_metric_values(
+        {
+            "count": 10,
+            "missing": None,
+            "negative_average": -1.25,
+            "rate": 2 / 3,
+        },
+        {
+            "count": Decimal("10"),
+            "missing": None,
+            "negative_average": Decimal("-1.2500"),
+            "rate": Decimal("0.666667"),
+        },
+        tolerance=1e-4,
+    )
+
+    assert all(finding.status == "Passed" for finding in findings)
+
+
+def test_metric_reconciliation_detects_decimal_mismatch() -> None:
+    findings = reconcile_metric_values(
+        {"rate": 0.5},
+        {"rate": Decimal("0.5002")},
+        tolerance=1e-4,
+    )
+
+    assert findings[0].status == "Failed"
+
+
+def test_metric_reconciliation_distinguishes_null_from_missing_key() -> None:
+    findings = reconcile_metric_values(
+        {"nullable_metric": None},
+        {},
+        tolerance=1e-4,
+    )
+
+    assert findings[0].status == "Failed"
+    assert "sql=<missing key>" in findings[0].observed_value
+
+
+def test_metric_reconciliation_never_rounds_large_integer_counts_to_a_match() -> None:
+    findings = reconcile_metric_values(
+        {"count": 9_007_199_254_740_993},
+        {"count": Decimal("9007199254740992")},
+        tolerance=1.0,
     )
 
     assert findings[0].status == "Failed"
