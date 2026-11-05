@@ -1,22 +1,93 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "c0000000000000000013",
-  "position": {"x": 950, "y": 620, "z": 13, "height": 300, "width": 900, "tabOrder": 13},
+  "position": {
+    "x": 950,
+    "y": 580,
+    "z": 13,
+    "height": 280,
+    "width": 900,
+    "tabOrder": 13
+  },
   "visual": {
     "visualType": "clusteredColumnChart",
     "query": {
       "queryState": {
-        "Category": {"projections": [{"field": {"Column": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "selected_review_score"}}, "queryRef": "order_delivery.selected_review_score", "nativeQueryRef": "selected_review_score"}]},
-        "Y": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "On-Time Rate"}}, "queryRef": "order_delivery.On-Time Rate", "nativeQueryRef": "On-Time Rate"}]},
-        "Tooltips": {"projections": [
-          {"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "Delivery Eligible Orders"}}, "queryRef": "order_delivery.Delivery Eligible Orders", "nativeQueryRef": "Delivery Eligible Orders"},
-          {"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "Reviewed Orders"}}, "queryRef": "order_delivery.Reviewed Orders", "nativeQueryRef": "Reviewed Orders"}
-        ]}
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "order_delivery"
+                    }
+                  },
+                  "Property": "selected_review_score"
+                }
+              },
+              "queryRef": "order_delivery.selected_review_score",
+              "nativeQueryRef": "selected_review_score",
+              "active": true
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "order_delivery"
+                    }
+                  },
+                  "Property": "Delivery Eligible Orders"
+                }
+              },
+              "queryRef": "order_delivery.Delivery Eligible Orders",
+              "nativeQueryRef": "Delivery Eligible Orders"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "order_delivery"
+                    }
+                  },
+                  "Property": "On-Time Rate"
+                }
+              },
+              "queryRef": "order_delivery.On-Time Rate",
+              "nativeQueryRef": "On-Time Rate"
+            }
+          ]
+        }
       }
     },
     "objects": {
-      "title": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "titleText": {"expr": {"Literal": {"Value": "'On-time rate by selected review score (descriptive)'"}}}}}],
-      "dataPoint": [{"properties": {"fill": {"solid": {"color": {"expr": {"Literal": {"Value": "'#2E7D32'"}}}}}}}]
+      "dataPoint": [
+        {
+          "properties": {
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#18866A'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

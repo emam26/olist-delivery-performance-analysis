@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "d0000000000000000012",
+  "position": {
+    "x": 420,
+    "y": 880,
+    "z": 12,
+    "height": 120,
+    "width": 1430,
+    "tabOrder": 12
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Audit note: source row counts are formatted as exact counts. Full source hashes and validation messages remain in the tables for traceability; use horizontal scrolling or export data to inspect long technical values without truncating the audit record.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "11pt",
+                      "color": "#637387"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

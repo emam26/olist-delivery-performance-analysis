@@ -1,10 +1,62 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "a0000000000000000004",
-  "position": {"x": 1100, "y": 110, "z": 4, "height": 120, "width": 240, "tabOrder": 4},
+  "position": {
+    "x": 1100,
+    "y": 110,
+    "z": 4,
+    "height": 120,
+    "width": 240,
+    "tabOrder": 4
+  },
   "visual": {
     "visualType": "cardVisual",
-    "query": {"queryState": {"Data": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "Average Delivery Days"}}, "queryRef": "order_delivery.Average Delivery Days", "nativeQueryRef": "Average Delivery Days"}]}}},
-    "objects": {"value": [{"properties": {"labelDisplayUnits": {"expr": {"Literal": {"Value": "1D"}}}, "labelPrecision": {"expr": {"Literal": {"Value": "2L"}}}}, "selector": {"metadata": "order_delivery.Average Delivery Days"}}]}
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "order_delivery"
+                    }
+                  },
+                  "Property": "Average Delivery Days"
+                }
+              },
+              "queryRef": "order_delivery.Average Delivery Days",
+              "nativeQueryRef": "Average Delivery Days"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "value": [
+        {
+          "properties": {
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "labelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "2L"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "order_delivery.Average Delivery Days"
+          }
+        }
+      ]
+    }
   }
 }

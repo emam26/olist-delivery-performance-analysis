@@ -1,0 +1,62 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "a0000000000000000022",
+  "position": {
+    "x": 840,
+    "y": 540,
+    "z": 22,
+    "height": 160,
+    "width": 480,
+    "tabOrder": 22
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "order_delivery"
+                    }
+                  },
+                  "Property": "Delivery Status Excluded Orders"
+                }
+              },
+              "queryRef": "order_delivery.Delivery Status Excluded Orders",
+              "nativeQueryRef": "Delivery Status Excluded Orders"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "value": [
+        {
+          "properties": {
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "labelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "0L"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "order_delivery.Delivery Status Excluded Orders"
+          }
+        }
+      ]
+    }
+  }
+}

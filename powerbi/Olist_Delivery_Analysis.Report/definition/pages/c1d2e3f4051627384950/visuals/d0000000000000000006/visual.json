@@ -1,10 +1,62 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "d0000000000000000006",
-  "position": {"x": 1370, "y": 20, "z": 6, "height": 163.33333333333334, "width": 240, "tabOrder": 6},
+  "position": {
+    "x": 1370,
+    "y": 110,
+    "z": 6,
+    "height": 100,
+    "width": 240,
+    "tabOrder": 6
+  },
   "visual": {
     "visualType": "cardVisual",
-    "query": {"queryState": {"Data": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "Delivery Status Excluded Orders"}}, "queryRef": "order_delivery.Delivery Status Excluded Orders", "nativeQueryRef": "Delivery Status Excluded Orders"}]}}},
-    "objects": {"value": [{"properties": {"labelDisplayUnits": {"expr": {"Literal": {"Value": "1D"}}}, "labelPrecision": {"expr": {"Literal": {"Value": "0L"}}}}, "selector": {"metadata": "order_delivery.Delivery Status Excluded Orders"}}]}
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "order_delivery"
+                    }
+                  },
+                  "Property": "Delivery Status Excluded Orders"
+                }
+              },
+              "queryRef": "order_delivery.Delivery Status Excluded Orders",
+              "nativeQueryRef": "Delivery Status Excluded Orders"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "value": [
+        {
+          "properties": {
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "labelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "0L"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "order_delivery.Delivery Status Excluded Orders"
+          }
+        }
+      ]
+    }
   }
 }

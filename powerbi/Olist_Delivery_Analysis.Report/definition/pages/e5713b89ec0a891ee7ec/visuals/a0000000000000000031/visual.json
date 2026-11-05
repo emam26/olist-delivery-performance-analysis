@@ -1,11 +1,37 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "a0000000000000000031",
-  "position": {"x": 20, "y": 60, "z": 31, "height": 32, "width": 1450, "tabOrder": 31},
+  "position": {
+    "x": 20,
+    "y": 60,
+    "z": 31,
+    "height": 32,
+    "width": 1450,
+    "tabOrder": 31
+  },
   "visual": {
     "visualType": "textbox",
     "objects": {
-      "general": [{"properties": {"paragraphs": [{"textRuns": [{"value": "Order-level KPIs and exclusions respond to the filters below. Monthly charts are fixed snapshot summaries.", "textStyle": {"fontFamily": "Segoe UI", "fontSize": "11pt", "color": "#637387"}}]}]}}]
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Order-level slicers affect the cards and exclusion visuals only. Monthly charts are fixed snapshot summaries; use volume and tooltips to interpret each month.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "10pt",
+                      "color": "#637387"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
     }
   }
 }

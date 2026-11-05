@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "c0000000000000000032",
+  "position": {
+    "x": 20,
+    "y": 890,
+    "z": 32,
+    "height": 110,
+    "width": 440,
+    "tabOrder": 32
+  },
+  "visual": {
+    "visualType": "slicer",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Category Delivery"
+                    }
+                  },
+                  "Property": "product_category_name"
+                }
+              },
+              "queryRef": "Category Delivery.product_category_name",
+              "nativeQueryRef": "product_category_name",
+              "active": true
+            }
+          ]
+        }
+      }
+    }
+  }
+}

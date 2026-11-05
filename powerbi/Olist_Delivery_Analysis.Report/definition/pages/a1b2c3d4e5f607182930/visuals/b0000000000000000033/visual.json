@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "b0000000000000000033",
+  "position": {
+    "x": 770,
+    "y": 890,
+    "z": 33,
+    "height": 110,
+    "width": 340,
+    "tabOrder": 33
+  },
+  "visual": {
+    "visualType": "slicer",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Seller Delivery"
+                    }
+                  },
+                  "Property": "seller_state"
+                }
+              },
+              "queryRef": "Seller Delivery.seller_state",
+              "nativeQueryRef": "seller_state",
+              "active": true
+            }
+          ]
+        }
+      }
+    }
+  }
+}

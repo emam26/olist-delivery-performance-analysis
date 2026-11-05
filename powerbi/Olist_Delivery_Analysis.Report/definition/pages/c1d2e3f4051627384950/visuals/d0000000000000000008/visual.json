@@ -1,10 +1,62 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "d0000000000000000008",
-  "position": {"x": 20, "y": 940, "z": 8, "height": 100, "width": 360, "tabOrder": 8},
+  "position": {
+    "x": 20,
+    "y": 880,
+    "z": 8,
+    "height": 120,
+    "width": 360,
+    "tabOrder": 8
+  },
   "visual": {
     "visualType": "cardVisual",
-    "query": {"queryState": {"Data": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "Orders Without Usable Review"}}, "queryRef": "order_delivery.Orders Without Usable Review", "nativeQueryRef": "Orders Without Usable Review"}]}}},
-    "objects": {"value": [{"properties": {"labelDisplayUnits": {"expr": {"Literal": {"Value": "1D"}}}, "labelPrecision": {"expr": {"Literal": {"Value": "0L"}}}}, "selector": {"metadata": "order_delivery.Orders Without Usable Review"}}]}
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "order_delivery"
+                    }
+                  },
+                  "Property": "Orders Without Usable Review"
+                }
+              },
+              "queryRef": "order_delivery.Orders Without Usable Review",
+              "nativeQueryRef": "Orders Without Usable Review"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "value": [
+        {
+          "properties": {
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "labelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "0L"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "order_delivery.Orders Without Usable Review"
+          }
+        }
+      ]
+    }
   }
 }

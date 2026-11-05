@@ -1,18 +1,131 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "b0000000000000000002",
-  "position": {"x": 950, "y": 20, "z": 2, "height": 430, "width": 930, "tabOrder": 2},
+  "position": {
+    "x": 950,
+    "y": 120,
+    "z": 2,
+    "height": 340,
+    "width": 930,
+    "tabOrder": 2
+  },
   "visual": {
     "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
-        "Category": {"projections": [{"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Seller Delivery"}}, "Property": "seller_id"}}, "queryRef": "Seller Delivery.seller_id", "nativeQueryRef": "seller_id"}]},
-        "Y": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "Seller Delivery"}}, "Property": "Late Rate (Min Eligible 30)"}}, "queryRef": "Seller Delivery.Late Rate (Min Eligible 30)", "nativeQueryRef": "Late Rate (Min Eligible 30)"}]}
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Seller Delivery"
+                    }
+                  },
+                  "Property": "seller_id"
+                }
+              },
+              "queryRef": "Seller Delivery.seller_id",
+              "nativeQueryRef": "seller_id",
+              "active": true
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Seller Delivery"
+                    }
+                  },
+                  "Property": "Seller Eligible Orders"
+                }
+              },
+              "queryRef": "Seller Delivery.Seller Eligible Orders",
+              "nativeQueryRef": "Seller Eligible Orders"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Seller Delivery"
+                    }
+                  },
+                  "Property": "Seller Late Rate (Min Eligible 30)"
+                }
+              },
+              "queryRef": "Seller Delivery.Seller Late Rate (Min Eligible 30)",
+              "nativeQueryRef": "Seller Late Rate (Min Eligible 30)"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Seller Delivery"
+                  }
+                },
+                "Property": "Seller Late Rate (Min Eligible 30)"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
       }
     },
     "objects": {
-      "title": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "titleText": {"expr": {"Literal": {"Value": "'Late delivery rate by seller (eligible orders >= 30)'"}}}}}],
-      "dataPoint": [{"properties": {"fill": {"solid": {"color": {"expr": {"Literal": {"Value": "'#D97706'"}}}}}}}]
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Late Delivery Rate by Seller'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "dataPoint": [
+        {
+          "properties": {
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#D85858'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

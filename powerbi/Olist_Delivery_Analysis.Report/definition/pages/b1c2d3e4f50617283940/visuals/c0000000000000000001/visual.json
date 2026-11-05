@@ -1,10 +1,37 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "c0000000000000000001",
-  "position": {"x": 20, "y": 20, "z": 1, "height": 163.33333333333334, "width": 250, "tabOrder": 1},
+  "position": {
+    "x": 20,
+    "y": 110,
+    "z": 1,
+    "height": 110,
+    "width": 250,
+    "tabOrder": 1
+  },
   "visual": {
     "visualType": "cardVisual",
-    "query": {"queryState": {"Data": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "Reviewed Orders"}}, "queryRef": "order_delivery.Reviewed Orders", "nativeQueryRef": "Reviewed Orders"}]}}},
-    "objects": {"title": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "titleText": {"expr": {"Literal": {"Value": "'Reviewed orders'"}}}}}]}
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "order_delivery"
+                    }
+                  },
+                  "Property": "Reviewed Orders"
+                }
+              },
+              "queryRef": "order_delivery.Reviewed Orders",
+              "nativeQueryRef": "Reviewed Orders"
+            }
+          ]
+        }
+      }
+    }
   }
 }

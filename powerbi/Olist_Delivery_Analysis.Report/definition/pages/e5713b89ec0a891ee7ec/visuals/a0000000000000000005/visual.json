@@ -1,10 +1,62 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "a0000000000000000005",
-  "position": {"x": 1370, "y": 110, "z": 5, "height": 120, "width": 240, "tabOrder": 5},
+  "position": {
+    "x": 1370,
+    "y": 110,
+    "z": 5,
+    "height": 120,
+    "width": 240,
+    "tabOrder": 5
+  },
   "visual": {
     "visualType": "cardVisual",
-    "query": {"queryState": {"Data": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "Median Delivery Days"}}, "queryRef": "order_delivery.Median Delivery Days", "nativeQueryRef": "Median Delivery Days"}]}}},
-    "objects": {"value": [{"properties": {"labelDisplayUnits": {"expr": {"Literal": {"Value": "1D"}}}, "labelPrecision": {"expr": {"Literal": {"Value": "2L"}}}}, "selector": {"metadata": "order_delivery.Median Delivery Days"}}]}
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "order_delivery"
+                    }
+                  },
+                  "Property": "Median Delivery Days"
+                }
+              },
+              "queryRef": "order_delivery.Median Delivery Days",
+              "nativeQueryRef": "Median Delivery Days"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "value": [
+        {
+          "properties": {
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "labelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "2L"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "order_delivery.Median Delivery Days"
+          }
+        }
+      ]
+    }
   }
 }

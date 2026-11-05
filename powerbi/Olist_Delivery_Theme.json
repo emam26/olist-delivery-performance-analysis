@@ -1,13 +1,12 @@
 {
   "name": "Olist Delivery Performance",
   "dataColors": [
-    "#315D8C",
-    "#18866A",
-    "#E6A23C",
     "#D85858",
+    "#18866A",
+    "#315D8C",
+    "#E6A23C",
     "#637387",
-    "#14263D",
-    "#FFFFFF"
+    "#14263D"
   ],
   "background": "#F5F7FA",
   "foreground": "#14263D",

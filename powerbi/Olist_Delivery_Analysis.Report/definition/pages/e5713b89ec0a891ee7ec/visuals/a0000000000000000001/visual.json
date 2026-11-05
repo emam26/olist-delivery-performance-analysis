@@ -1,10 +1,62 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "a0000000000000000001",
-  "position": {"x": 290, "y": 110, "z": 1, "height": 120, "width": 240, "tabOrder": 1},
+  "position": {
+    "x": 290,
+    "y": 110,
+    "z": 1,
+    "height": 120,
+    "width": 240,
+    "tabOrder": 1
+  },
   "visual": {
     "visualType": "cardVisual",
-    "query": {"queryState": {"Data": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "Delivery Eligible Orders"}}, "queryRef": "order_delivery.Delivery Eligible Orders", "nativeQueryRef": "Delivery Eligible Orders"}]}}},
-    "objects": {"value": [{"properties": {"labelDisplayUnits": {"expr": {"Literal": {"Value": "1D"}}}, "labelPrecision": {"expr": {"Literal": {"Value": "0L"}}}}, "selector": {"metadata": "order_delivery.Delivery Eligible Orders"}}]}
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "order_delivery"
+                    }
+                  },
+                  "Property": "Delivery Eligible Orders"
+                }
+              },
+              "queryRef": "order_delivery.Delivery Eligible Orders",
+              "nativeQueryRef": "Delivery Eligible Orders"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "value": [
+        {
+          "properties": {
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "labelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "0L"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "order_delivery.Delivery Eligible Orders"
+          }
+        }
+      ]
+    }
   }
 }

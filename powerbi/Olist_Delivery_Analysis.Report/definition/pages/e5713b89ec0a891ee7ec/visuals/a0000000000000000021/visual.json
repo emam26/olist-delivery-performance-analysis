@@ -1,17 +1,95 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "a0000000000000000021",
-  "position": {"x": 950, "y": 720, "z": 21, "height": 320, "width": 900, "tabOrder": 21},
+  "position": {
+    "x": 950,
+    "y": 720,
+    "z": 21,
+    "height": 320,
+    "width": 900,
+    "tabOrder": 21
+  },
   "visual": {
     "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
-        "Category": {"projections": [{"field": {"Column": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "duration_exclusion_reason"}}, "queryRef": "order_delivery.duration_exclusion_reason", "nativeQueryRef": "duration_exclusion_reason"}]},
-        "Y": {"projections": [{"field": {"Measure": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "Total Orders"}}, "queryRef": "order_delivery.Total Orders", "nativeQueryRef": "Total Orders"}]}
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "order_delivery"
+                    }
+                  },
+                  "Property": "duration_exclusion_reason"
+                }
+              },
+              "queryRef": "order_delivery.duration_exclusion_reason",
+              "nativeQueryRef": "duration_exclusion_reason",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "order_delivery"
+                    }
+                  },
+                  "Property": "Duration Exclusion Reason Orders"
+                }
+              },
+              "queryRef": "order_delivery.Duration Exclusion Reason Orders",
+              "nativeQueryRef": "Duration Exclusion Reason Orders"
+            }
+          ]
+        }
       }
     },
     "objects": {
-      "title": [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}}, "titleText": {"expr": {"Literal": {"Value": "'Duration exclusions (filtered order view)'"}}}}}]
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Duration Exclusions by Reason'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "dataPoint": [
+        {
+          "properties": {
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#637387'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

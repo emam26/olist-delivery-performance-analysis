@@ -1,9 +1,38 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "a0000000000000000012",
-  "position": {"x": 20, "y": 540, "z": 12, "height": 160, "width": 220, "tabOrder": 12},
+  "position": {
+    "x": 20,
+    "y": 540,
+    "z": 12,
+    "height": 160,
+    "width": 220,
+    "tabOrder": 12
+  },
   "visual": {
     "visualType": "slicer",
-    "query": {"queryState": {"Values": {"projections": [{"field": {"Column": {"Expression": {"SourceRef": {"Entity": "order_delivery"}}, "Property": "customer_state"}}, "queryRef": "order_delivery.customer_state", "nativeQueryRef": "customer_state"}]}}}
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "order_delivery"
+                    }
+                  },
+                  "Property": "customer_state"
+                }
+              },
+              "queryRef": "order_delivery.customer_state",
+              "nativeQueryRef": "customer_state",
+              "active": true
+            }
+          ]
+        }
+      }
+    }
   }
 }

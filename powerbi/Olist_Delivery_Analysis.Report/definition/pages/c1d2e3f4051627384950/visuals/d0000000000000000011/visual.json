@@ -1,19 +1,106 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "d0000000000000000011",
-  "position": {"x": 20, "y": 620, "z": 11, "height": 300, "width": 1830, "tabOrder": 11},
+  "position": {
+    "x": 20,
+    "y": 550,
+    "z": 11,
+    "height": 300,
+    "width": 1830,
+    "tabOrder": 11
+  },
   "visual": {
     "visualType": "tableEx",
     "query": {
       "queryState": {
-        "Values": {"projections": [
-          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Source Provenance"}}, "Property": "dataset_name"}}, "queryRef": "Source Provenance.dataset_name", "nativeQueryRef": "dataset_name"},
-          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Source Provenance"}}, "Property": "source_filename"}}, "queryRef": "Source Provenance.source_filename", "nativeQueryRef": "source_filename"},
-          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Source Provenance"}}, "Property": "expected_row_count"}}, "queryRef": "Source Provenance.expected_row_count", "nativeQueryRef": "expected_row_count"},
-          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Source Provenance"}}, "Property": "inserted_row_count"}}, "queryRef": "Source Provenance.inserted_row_count", "nativeQueryRef": "inserted_row_count"},
-          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Source Provenance"}}, "Property": "source_sha256"}}, "queryRef": "Source Provenance.source_sha256", "nativeQueryRef": "source_sha256"},
-          {"field": {"Column": {"Expression": {"SourceRef": {"Entity": "Source Provenance"}}, "Property": "completed_at_utc"}}, "queryRef": "Source Provenance.completed_at_utc", "nativeQueryRef": "completed_at_utc"}
-        ]}
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Source Provenance"
+                    }
+                  },
+                  "Property": "dataset_name"
+                }
+              },
+              "queryRef": "Source Provenance.dataset_name",
+              "nativeQueryRef": "dataset_name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Source Provenance"
+                    }
+                  },
+                  "Property": "source_filename"
+                }
+              },
+              "queryRef": "Source Provenance.source_filename",
+              "nativeQueryRef": "source_filename"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Source Provenance"
+                    }
+                  },
+                  "Property": "expected_row_count"
+                }
+              },
+              "queryRef": "Source Provenance.expected_row_count",
+              "nativeQueryRef": "expected_row_count"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Source Provenance"
+                    }
+                  },
+                  "Property": "inserted_row_count"
+                }
+              },
+              "queryRef": "Source Provenance.inserted_row_count",
+              "nativeQueryRef": "inserted_row_count"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Source Provenance"
+                    }
+                  },
+                  "Property": "source_sha256"
+                }
+              },
+              "queryRef": "Source Provenance.source_sha256",
+              "nativeQueryRef": "source_sha256"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Source Provenance"
+                    }
+                  },
+                  "Property": "completed_at_utc"
+                }
+              },
+              "queryRef": "Source Provenance.completed_at_utc",
+              "nativeQueryRef": "completed_at_utc"
+            }
+          ]
+        }
       }
     }
   }
