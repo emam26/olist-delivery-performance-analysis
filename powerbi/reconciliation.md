@@ -16,7 +16,7 @@ results into the repository before they are observed.
 
 ## Grain and count checks
 
-- `Order Delivery` row count equals the canonical analytical-order count.
+- `order_delivery` row count equals the canonical analytical-order count.
 - `DISTINCTCOUNT(order_id)` equals the same order count.
 - There are no blank or duplicate order IDs in the order-level table.
 - Monthly source-order counts sum to the number of order-level rows with a nonblank

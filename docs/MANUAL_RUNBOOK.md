@@ -271,7 +271,7 @@ Where: WSL Bash, activated environment, project root.
 
 ```bash
 python scripts/export_dashboard_data.py \
-  --output-directory reports/exports/olist_dashboard_v1
+  --output-directory reports/exports/olist_snapshot_1
 ```
 
 Purpose: create one non-overwritten CSV set and `manifest.json` for offline Power BI
@@ -282,12 +282,32 @@ hashes, the active snapshot/manifest identity, and validation run/status. Export
 must fail before creating a directory when the current snapshot has no completed
 Passed or Warning validation run.
 
+The checked-in PBIP partitions point to `reports/exports/olist_snapshot_1`, matching
+the operator's current snapshot. If that directory already exists and a new export
+is required, use a new directory name and update all eight TMDL partition paths to
+that one directory before refreshing Power BI. Never mix files from different
+export directories.
+
 ### D2. Build and reconcile Power BI manually
 
 Where: Power BI Desktop on Windows.
 
-Action: follow `powerbi/README.md`, `data_model.md`, `measures.dax`, and
-`dashboard_specification.md`. Then complete every item in `reconciliation.md`.
+Action:
+
+1. Open `powerbi/Olist_Delivery_Analysis.pbip` in Power BI Desktop.
+2. Confirm all eight CSV partitions resolve to one export directory; update the
+   TMDL paths if the local directory is not `reports/exports/olist_snapshot_1`.
+3. Refresh the model and confirm the four pages load without broken visuals.
+4. Import `powerbi/Olist_Delivery_Theme.json` if the navy/green/amber theme is not
+   already applied.
+5. Verify that the state, seller, and category comparison measures suppress groups
+   below `eligible_order_count >= 30`. If a visual has been rebuilt from raw summary
+   columns, apply that threshold directly to the corresponding disconnected table;
+   do not use the order-level threshold measure as a cross-table filter.
+6. Check slicers, chart titles, percentage denominators, null display, review-score
+   class behavior, and the non-additive seller/category disclaimers.
+7. Follow `powerbi/README.md`, `data_model.md`, `measures.dax`, and
+   `dashboard_specification.md`, then complete every item in `reconciliation.md`.
 
 Expected pattern: exact count agreement, tolerance-bounded rates/durations, visible
 denominators/exclusions, disconnected seller/category summaries, and no failed

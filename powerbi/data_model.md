@@ -16,7 +16,7 @@ export directories.
 
 | Power BI table | SQL view | Grain | Intended use |
 |---|---|---|---|
-| Order Delivery | `reporting.vw_order_delivery_detail` | One row per canonical order | Core cards, distributions, drill-through, and independently filtered metrics |
+| `order_delivery` | `reporting.vw_order_delivery_detail` | One row per canonical order | Core cards, distributions, drill-through, and independently filtered metrics |
 | Monthly Delivery | `reporting.vw_monthly_delivery` | Purchase month | Reconciled time trend |
 | State Delivery | `reporting.vw_state_delivery` | Customer state | Geographic comparison |
 | Seller Delivery | `reporting.vw_seller_delivery` | Distinct order-seller attribution | Seller comparison only; totals are not additive |
@@ -31,15 +31,15 @@ Keep all summary, quality, and provenance tables disconnected. They contain valu
 at different grains; relating them to the order-level table would create ambiguous
 filtering and tempting but invalid totals.
 
-Use `Order Delivery[purchase_month]` or the monthly view for the purchase-month
+Use `order_delivery[purchase_month]` or the monthly view for the purchase-month
 trend. The monthly view may be used directly for the published trend after its
 values reconcile with the order-level measures. The export contract does not
 include a separate order-purchase-date column.
 
 ```DAX
 Calendar =
-VAR FirstDate = MINX('Order Delivery', 'Order Delivery'[purchase_month])
-VAR LastDate = MAXX('Order Delivery', 'Order Delivery'[purchase_month])
+VAR FirstDate = MINX('order_delivery', 'order_delivery'[purchase_month])
+VAR LastDate = MAXX('order_delivery', 'order_delivery'[purchase_month])
 RETURN
     ADDCOLUMNS(
         CALENDAR(FirstDate, LastDate),
@@ -52,12 +52,14 @@ RETURN
 
 Sort `Calendar[Month]` by `Calendar[Year Month Sort]`.
 
-Create one active, single-direction, many-to-one relationship from
-`Order Delivery[purchase_month]` (many) to `Calendar[Date]` (one). Mark `Calendar`
-as the date table using `Calendar[Date]`. Do not relate `Monthly Delivery` to the
-calendar at the same time; use it as a disconnected reconciled visual source, or
-build the monthly visual from `Order Delivery`, but do not mix both approaches in
-one visual.
+The current PBIR model already contains Power BI's local date-table relationship
+for `order_delivery[purchase_month]`. Keep it single-direction and use it for
+purchase-month filtering. If a replacement Calendar table is created, use one
+active, single-direction, many-to-one relationship from
+`order_delivery[purchase_month]` (many) to `Calendar[Date]` (one), mark `Calendar`
+as the date table, and do not relate `Monthly Delivery` to it at the same time.
+Use the monthly table as a disconnected reconciled visual source, or build the
+monthly visual from `order_delivery`, but do not mix both approaches in one visual.
 
 ## Import instructions
 
@@ -80,7 +82,12 @@ Never combine files from two export directories.
 - Review analysis uses one deterministic usable review per order. It describes an
   association and does not establish that delivery performance caused the score.
 - Apply the documented minimum group-size threshold before ranking sellers,
-  categories, states, or review groups.
-- Apply the threshold as a visual-level filter on each summary table's
-  `eligible_order_count`; the order-level `[Minimum Group Size]` measure is a label,
-  not a valid cross-table filter for disconnected summaries.
+  categories, states, or review groups. The PBIR comparison measures enforce
+  `eligible_order_count >= [Minimum Group Size]` in their own disconnected-table
+  filter context and return blank for smaller groups.
+- If a visual is rebuilt manually from raw summary columns, apply an explicit
+  visual-level filter on that summary table's `eligible_order_count`; the
+  order-level `[Minimum Group Size]` measure is not a cross-table filter.
+- Page-1 order-level slicers do not propagate to the disconnected monthly table.
+  The monthly visuals are therefore snapshot-level reconciled summaries, not
+  slicer-responsive recomputations of the order-level table.

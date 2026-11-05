@@ -27,7 +27,7 @@ Last updated: 2026-11-04
 | SQL data-quality procedure | Implemented | NOT RUN |
 | Independent metric reconciliation | Implemented | NOT RUN |
 | Dashboard CSV export | Validation-gated provenance export implemented | NOT RUN |
-| Power BI model/measures/four-page specification | Documented | Desktop build and reconciliation NOT RUN |
+| Power BI PBIP/PBIR model, measures, four-page layout, and theme | Source edits prepared | Desktop refresh, visual binding, and reconciliation NOT RUN |
 | Empirical findings | Template only | No findings claimed |
 
 ## Implemented safeguards
