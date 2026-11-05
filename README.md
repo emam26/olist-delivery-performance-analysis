@@ -2,7 +2,7 @@
 
 > Understanding delivery times, late orders, and customer reviews with SQL, Python, and Power BI.
 
-![Status: Implementation awaiting verification](https://img.shields.io/badge/status-awaiting%20verification-yellow)
+![Status: Dashboard source prepared; Desktop verification pending](https://img.shields.io/badge/status-dashboard%20verification%20pending-yellow)
 ![Python](https://img.shields.io/badge/language-Python-3776AB?logo=python&logoColor=white)
 ![SQL Server](https://img.shields.io/badge/database-SQL%20Server-CC2927)
 ![Power BI](https://img.shields.io/badge/dashboard-Power%20BI-F2C811)
@@ -10,9 +10,10 @@
 The project addresses a practical question: **where do delivery delays appear in Olist's historical orders, and how do those orders compare with on-time deliveries?** The implementation uses SQL and Python to prepare the data and Power BI to present the findings.
 
 > [!NOTE]
-> The implementation is present but has not been verified against the real source
-> data or a live SQL Server. No findings, dashboard screenshots, or performance
-> results are claimed yet.
+> The Python, SQL Server, export, and reconciliation workflow has been exercised by
+> the project operator for dataset snapshot #1. The editable Power BI source has
+> not yet been reopened and visually validated in Power BI Desktop. No dashboard
+> screenshot or causal business finding is claimed here.
 
 ## Purpose
 
@@ -52,7 +53,9 @@ The analysis will report group sizes beside rates. Small groups will not be rank
 5. Activate all six successful source batches as one immutable analytical snapshot.
 6. Calculate delivery metrics independently in SQL and Python and reconcile them.
 7. Export validated reporting data or import reporting views into Power BI.
-8. Publish findings only with exclusions, provenance, and limitations.
+8. Refresh the editable PBIP report, reconcile its unfiltered cards to the SQL and
+   Python outputs, and capture screenshots only after the publication gate passes.
+9. Publish findings only with exclusions, provenance, and limitations.
 
 The core tools are Microsoft SQL Server, T-SQL, Python, pandas, Power BI, and Git.
 
@@ -97,6 +100,51 @@ If multiple reviews exist for one order, the analysis will first inspect them an
 - **Customer reviews:** review distributions alongside delivery outcomes.
 - **Data quality:** missing fields, exclusions, unmatched records, and reconciliation totals.
 
+The editable PBIP/PBIR source is in [`powerbi/`](powerbi/). It contains four
+report pages, a TMDL model with the order-level and disconnected reporting tables,
+and denominator-safe measures. Local CSV partitions and the `.pbix` deliverable
+remain machine-specific artifacts; they are not portfolio evidence until the
+operator refreshes and checks the report in Power BI Desktop.
+
+## Verified snapshot baseline
+
+The operator-reported snapshot #1 baseline contains 99,441 source orders and the
+following reconciled overall metrics:
+
+| Metric | Snapshot value |
+| --- | ---: |
+| Delivered orders | 96,478 |
+| Delivery-eligible orders | 96,470 |
+| On-time orders | 89,936 |
+| Late orders | 6,534 |
+| On-time delivery rate | 93.2269% |
+| Late delivery rate | 6.7731% |
+| Duration-eligible orders | 96,476 |
+| Average delivery hours | 301.4089 |
+| Median delivery hours | 245.2261 |
+| P90 delivery hours | 554.3425 |
+| P95 delivery hours | 702.6244 |
+| Average days late | 10.6201 |
+
+These are validation references supplied by the operator for snapshot #1, not
+claims about current Olist operations. Re-run reconciliation after any refresh.
+
+## Dashboard showcase
+
+Real screenshots are intentionally not included yet. After Power BI Desktop
+refresh and reconciliation, capture the four pages listed above using
+[`docs/SCREENSHOT_CHECKLIST.md`](docs/SCREENSHOT_CHECKLIST.md), then add only the
+resulting image paths here. Until that step, visual insights remain pending
+analysis and should not be inferred from the snapshot totals alone.
+
+Pending insight placeholders:
+
+- `[Pending]` Compare monthly on-time performance after checking cohort sizes and
+  excluded purchase months.
+- `[Pending]` Compare state and seller rankings only after applying the minimum
+  eligible-order threshold and disclosing non-additive attribution.
+- `[Pending]` Describe review-score differences as associations, not causal effects.
+
 ## Validation and completion evidence
 
 Before publishing findings, the project should demonstrate that:
@@ -109,11 +157,10 @@ Before publishing findings, the project should demonstrate that:
 - Power BI totals agree with the underlying reporting views.
 - A fresh run can reproduce the published outputs from the documented input files.
 
-The last user-supplied baseline before the current hardening edits was Python
-3.13.13, Ruff lint and format checks passing, and 48 offline tests passing with one
-SQL Server test deselected. Because source, SQL, tests, and documentation have since
-changed, those results are historical evidence only; the current revision requires
-the manual verification commands below.
+The operator-reported snapshot #1 evidence includes 446,802 source rows across six
+datasets, a successfully activated snapshot, completed SQL data-quality validation,
+and reconciled internal delivery KPI counts. Desktop report rendering and visual
+filter behavior remain manual verification steps.
 
 ## Reproduce from a fresh checkout
 
@@ -130,8 +177,8 @@ python -m pytest -q -m "not sqlserver"
 Then acquire the six source files manually, create a non-overwriting inventory,
 configure the ignored `.env`, and follow the SQL Server and Power BI phases in the
 [manual runbook](docs/MANUAL_RUNBOOK.md). Database deployment, real-data loading,
-metric reconciliation, export, and dashboard construction remain manual and
-environment-dependent.
+metric reconciliation, export, and Power BI refresh/rendering remain
+environment-dependent manual steps.
 
 ## Interpretation limits
 
@@ -141,11 +188,11 @@ Differences between groups and associations with review scores will be described
 
 ## Current setup
 
-The reproducible Python, SQL Server, validation, and Power BI handoff layers are
-implemented but **NOT VERIFIED**. No source data were downloaded and no empirical
-result is claimed. Run the [manual runbook](docs/MANUAL_RUNBOOK.md) from a local
-environment to perform the offline checks, then the separately opt-in SQL Server
-steps.
+The reproducible Python, SQL Server, validation, and export layers have been
+operator-verified for snapshot #1. The editable Power BI source is implemented but
+its Desktop refresh, visual bindings, filters, and screenshots remain **NOT
+VERIFIED**. Raw data, local exports, credentials, and generated database artifacts
+remain outside version control.
 
 Start with the [manual runbook](docs/MANUAL_RUNBOOK.md). The implemented design is
 documented in [architecture](docs/ARCHITECTURE.md), [methodology](docs/METHODOLOGY.md),
