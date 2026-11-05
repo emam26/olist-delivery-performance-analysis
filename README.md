@@ -1,12 +1,20 @@
 # Olist Delivery Performance Analysis
 
-An evidence-backed case study of where a historical e-commerce delivery process
-meets its promised dates, where it does not, and how to investigate the slow tail
-without losing data quality or denominator discipline.
+![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
+![SQL Server](https://img.shields.io/badge/SQL_Server-Microsoft-CC2927)
+![Power BI](https://img.shields.io/badge/Power_BI-Dashboard-F2C811?logo=powerbi&logoColor=black)
 
-> Historical public-data analysis, not a live Olist operational dashboard. Snapshot
-> #1 is the documented analytical baseline; figures below are not current business
-> performance.
+This project analyzes delivery performance and customer satisfaction using the Brazilian Olist e-commerce dataset. I used **Python and SQL Server** to process, validate, and analyze **99,441 orders**, and developed a **four-page Power BI dashboard** to explore delivery trends, regional differences, seller performance, and customer reviews.
+
+The analysis found that **93.23% of eligible orders arrived on time**, while late orders were delayed by **10.62 days on average**. São Paulo and Rio de Janeiro together accounted for **50.73% of late orders**. Late deliveries were also associated with substantially more one-star customer reviews.
+
+### Key Performance Highlights
+
+![On-time delivery](https://img.shields.io/badge/On--Time_Delivery-93.23%25-2E7D32?style=for-the-badge)
+![Late delivery](https://img.shields.io/badge/Late_Delivery-6.77%25-C62828?style=for-the-badge)
+
+![Average lateness](https://img.shields.io/badge/Avg._Days_Late-10.62-EF6C00?style=for-the-badge)
+![Regional concentration](https://img.shields.io/badge/SP_%2B_RJ-50.73%25_of_Late_Orders-1565C0?style=for-the-badge)
 
 ## Executive summary
 

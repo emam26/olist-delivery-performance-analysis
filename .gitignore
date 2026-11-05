@@ -52,3 +52,6 @@ Thumbs.db
 *.pbit
 *.abf
 **/*credentials*
+
+# Local Power BI PDF export
+/Olist_Delivery_Analysis.pdf
