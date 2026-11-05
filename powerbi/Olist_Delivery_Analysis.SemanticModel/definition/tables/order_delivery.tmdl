@@ -7,13 +7,11 @@ table order_delivery
 		formatString: #,0
 		lineageTag: f4d5e0b1-b684-4e59-a9aa-e2185191267f
 
-	measure 'Delivered Orders' =
-			CALCULATE([Total Orders], 'order_delivery'[is_delivered] = TRUE())
+	measure 'Delivered Orders' = CALCULATE([Total Orders], 'order_delivery'[is_delivered] = TRUE())
 		formatString: #,0
 		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000001
 
-	measure 'Delivery Eligible Orders' =
-			CALCULATE([Total Orders], 'order_delivery'[is_delivery_eligible] = TRUE())
+	measure 'Delivery Eligible Orders' = CALCULATE([Total Orders], 'order_delivery'[is_delivery_eligible] = TRUE())
 		formatString: #,0
 		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000002
 
@@ -35,30 +33,43 @@ table order_delivery
 		formatString: #,0
 		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000004
 
-	measure 'On-Time Rate' =
-			DIVIDE([On-Time Orders], [Delivery Eligible Orders])
+	measure 'On-Time Rate' = DIVIDE([On-Time Orders], [Delivery Eligible Orders])
 		formatString: 0.00%
 		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000005
 
-	measure 'Late Rate' =
-			DIVIDE([Late Orders], [Delivery Eligible Orders])
+	measure 'Late Rate' = DIVIDE([Late Orders], [Delivery Eligible Orders])
 		formatString: 0.00%
 		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000006
 
-	measure 'Delivery Status Excluded Orders' =
-			[Total Orders] - [Delivery Eligible Orders]
+	measure 'Delivery Status Excluded Orders' = [Total Orders] - [Delivery Eligible Orders]
 		formatString: #,0
 		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000007
 
-	measure 'Duration Eligible Orders' =
-			CALCULATE([Total Orders], 'order_delivery'[is_duration_eligible] = TRUE())
+	measure 'Duration Eligible Orders' = CALCULATE([Total Orders], 'order_delivery'[is_duration_eligible] = TRUE())
 		formatString: #,0
 		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000008
 
-	measure 'Duration Excluded Orders' =
-			[Total Orders] - [Duration Eligible Orders]
+	measure 'Duration Excluded Orders' = [Total Orders] - [Duration Eligible Orders]
 		formatString: #,0
 		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000009
+
+	measure 'Delivery Exclusion Reason Orders' =
+			IF(
+				ISINSCOPE('order_delivery'[delivery_exclusion_reason])
+					&& NOT ISBLANK(SELECTEDVALUE('order_delivery'[delivery_exclusion_reason])),
+				CALCULATE([Total Orders], 'order_delivery'[is_delivery_eligible] = FALSE())
+			)
+		formatString: #,0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000020
+
+	measure 'Duration Exclusion Reason Orders' =
+			IF(
+				ISINSCOPE('order_delivery'[duration_exclusion_reason])
+					&& NOT ISBLANK(SELECTEDVALUE('order_delivery'[duration_exclusion_reason])),
+				CALCULATE([Total Orders], 'order_delivery'[is_duration_eligible] = FALSE())
+			)
+		formatString: #,0
+		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000021
 
 	measure 'Average Delivery Days' =
 			CALCULATE(
@@ -121,8 +132,7 @@ table order_delivery
 		formatString: #,0
 		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000015
 
-	measure 'Orders Without Usable Review' =
-			[Total Orders] - [Reviewed Orders]
+	measure 'Orders Without Usable Review' = [Total Orders] - [Reviewed Orders]
 		formatString: #,0
 		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000016
 
@@ -138,8 +148,7 @@ table order_delivery
 		formatString: #,0
 		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000018
 
-	measure 'Review Page Title' =
-			"Delivery timing and review score - descriptive association"
+	measure 'Review Page Title' = "Delivery timing and review score - descriptive association"
 		lineageTag: 2d3b7e2f-7f7a-4b2f-9aa5-000000000019
 
 	column order_id
@@ -283,3 +292,4 @@ table order_delivery
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+

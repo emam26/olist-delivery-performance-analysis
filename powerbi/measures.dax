@@ -48,6 +48,22 @@ CALCULATE(
 Duration Excluded Orders =
 [Total Orders] - [Duration Eligible Orders]
 
+// Visual-only reason measures suppress the blank reason that identifies an
+// eligible order. They keep each nonblank reason inside its proper cohort.
+Delivery Exclusion Reason Orders =
+IF(
+    ISINSCOPE('order_delivery'[delivery_exclusion_reason])
+        && NOT ISBLANK(SELECTEDVALUE('order_delivery'[delivery_exclusion_reason])),
+    CALCULATE([Total Orders], 'order_delivery'[is_delivery_eligible] = FALSE())
+)
+
+Duration Exclusion Reason Orders =
+IF(
+    ISINSCOPE('order_delivery'[duration_exclusion_reason])
+        && NOT ISBLANK(SELECTEDVALUE('order_delivery'[duration_exclusion_reason])),
+    CALCULATE([Total Orders], 'order_delivery'[is_duration_eligible] = FALSE())
+)
+
 Average Delivery Days =
 CALCULATE(
     DIVIDE(AVERAGE('order_delivery'[delivery_duration_hours]), 24),
@@ -156,7 +172,8 @@ State Median Delivery Hours (Min Eligible 30) =
 VAR Eligible = SUM('State Delivery'[eligible_order_count])
 RETURN
     IF(
-        Eligible >= [Minimum Group Size],
+        ISINSCOPE('State Delivery'[customer_state])
+            && Eligible >= [Minimum Group Size],
         SELECTEDVALUE('State Delivery'[median_delivery_hours])
     )
 
@@ -180,13 +197,17 @@ RETURN
     )
 
 Category Eligible Orders =
-SUM('Category Delivery'[eligible_order_count])
+IF(
+    ISINSCOPE('Category Delivery'[product_category_name]),
+    SUM('Category Delivery'[eligible_order_count])
+)
 
 Category On-Time Rate (Min Eligible 30) =
 VAR Eligible = SUM('Category Delivery'[eligible_order_count])
 RETURN
     IF(
-        Eligible >= [Minimum Group Size],
+        ISINSCOPE('Category Delivery'[product_category_name])
+            && Eligible >= [Minimum Group Size],
         DIVIDE(SUM('Category Delivery'[on_time_order_count]), Eligible)
     )
 
@@ -194,7 +215,8 @@ Category Late Rate (Min Eligible 30) =
 VAR Eligible = SUM('Category Delivery'[eligible_order_count])
 RETURN
     IF(
-        Eligible >= [Minimum Group Size],
+        ISINSCOPE('Category Delivery'[product_category_name])
+            && Eligible >= [Minimum Group Size],
         DIVIDE(SUM('Category Delivery'[late_order_count]), Eligible)
     )
 

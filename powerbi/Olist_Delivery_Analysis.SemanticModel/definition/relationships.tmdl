@@ -2,3 +2,9 @@ relationship 68c9a494-be43-4f98-8d2f-9867f3e29c82
 	joinOnDateBehavior: datePartOnly
 	fromColumn: order_delivery.purchase_month
 	toColumn: LocalDateTable_77e388ed-6d0f-4a11-9481-8cf4bc859478.Date
+
+relationship ad1df6b7-e7f8-4193-96ad-f42e2ed9dffd
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 'Monthly Delivery'.purchase_month
+	toColumn: LocalDateTable_8d8d38f4-b76f-4673-a84c-fbf78b1491d1.Date
+
