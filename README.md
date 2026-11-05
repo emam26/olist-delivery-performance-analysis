@@ -16,18 +16,6 @@ The analysis found that **93.23% of eligible orders arrived on time**, while lat
 ![Average lateness](https://img.shields.io/badge/Avg._Days_Late-10.62-EF6C00?style=for-the-badge)
 ![Regional concentration](https://img.shields.io/badge/SP_%2B_RJ-50.73%25_of_Late_Orders-1565C0?style=for-the-badge)
 
-## Executive summary
-
-Snapshot #1 reconciles an order-level Python implementation with SQL Server and
-publishes a manifest-bound Power BI export. Of 96,470 orders eligible for delivery
-classification, 89,936 arrived on time and 6,534 arrived late: an on-time rate of
-93.23%. The median valid delivery duration was 10.22 days, while P90 was 23.10
-days—evidence that the slower tail deserves separate operational attention.
-
-This project deliberately keeps missing timestamps, exclusions, review selection,
-and seller/category attribution visible. It describes associations and distributions;
-it does not claim a seller, state, or delivery outcome caused customer satisfaction.
-
 ## Verified Snapshot #1 KPIs
 
 | Metric | Reconciled value |
